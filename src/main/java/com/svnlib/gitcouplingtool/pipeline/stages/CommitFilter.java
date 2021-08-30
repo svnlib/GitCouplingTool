@@ -1,33 +1,29 @@
-package com.svnlib.gitcouplingtool.parsing;
+package com.svnlib.gitcouplingtool.pipeline.stages;
 
 import com.svnlib.gitcouplingtool.Config;
-import org.eclipse.jgit.errors.StopWalkException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.revwalk.filter.RevFilter;
+import teetime.stage.basic.AbstractFilter;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
-public class CommitFilter extends RevFilter {
-
-    public CommitFilter() {
-
-    }
+public class CommitFilter extends AbstractFilter<RevCommit> {
 
     @Override
-    public boolean include(final RevWalk walker, final RevCommit cmit) throws StopWalkException {
+    protected void execute(final RevCommit element) {
+        if (checkFilter(element)) {
+            this.outputPort.send(element);
+        }
+    }
 
-        if (!Config.includeMergeCommits) {
-            // exclude merges
-            if (cmit.getParentCount() > 1) {
-                return false;
-            }
+    private boolean checkFilter(final RevCommit commit) {
+        if (!Config.includeMergeCommits && commit.getParentCount() > 1) {
+            return false;
         }
 
         if (Config.toDate != null || Config.fromDate != null) {
-            final LocalDate commitTime = new Timestamp(cmit.getCommitTime()).toLocalDateTime().toLocalDate();
+            final LocalDate commitTime = new Timestamp(commit.getCommitTime()).toLocalDateTime().toLocalDate();
             if (Config.toDate != null && commitTime.isAfter(Config.toDate)) {
                 return false;
             }
@@ -37,7 +33,7 @@ public class CommitFilter extends RevFilter {
         }
 
         if (Config.author != null) {
-            final PersonIdent authorIdent = cmit.getAuthorIdent();
+            final PersonIdent authorIdent = commit.getAuthorIdent();
             final String      email       = authorIdent.getEmailAddress();
             final String      name        = authorIdent.getName();
 
@@ -47,11 +43,6 @@ public class CommitFilter extends RevFilter {
         }
 
         return true;
-    }
-
-    @Override
-    public RevFilter clone() {
-        return this;
     }
 
 }

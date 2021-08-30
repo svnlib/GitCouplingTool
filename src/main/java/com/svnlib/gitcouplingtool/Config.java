@@ -33,37 +33,41 @@ public class Config {
     public static boolean      followRenames;
 
     public static void print() {
+        final String s = colorize("================================================\n", Attribute.BOLD()) +
+                         colorize("Running with config:\n", Attribute.BOLD()) +
+                         colorize("------------------------------------------------\n", Attribute.BOLD()) +
+                         colorize("Performance\n", Attribute.UNDERLINE()) +
+                         "Threads:                " + threads + "\n" +
+                         colorize("\nGeneral\n", Attribute.UNDERLINE()) +
+                         "Repository:             " + git.getRepository().getDirectory() + "\n" +
+                         "Output:                 " + output + "\n" +
+                         "Algorithm:              " + algorithm + "\n" +
+                         "Combine consecutive:    " + combineConsecutive + "\n" +
+                         "Follow renames:         " + followRenames + "\n" +
+                         colorize("\nFiltering\n", Attribute.UNDERLINE()) +
+                         "Branch:                 " + printNull(branch) + "\n" +
+                         "File types:             " + printNull(fileTypes) + "\n" +
+                         "Author:                 " + printNull(author) + "\n" +
+                         "From date:              " + printNull(fromDate) + "\n" +
+                         "To date:                " + printNull(toDate) + "\n" +
+                         "From commit:            " + printNull(fromCommit) + "\n" +
+                         "To commit:              " + printNull(toCommit) + "\n" +
+                         "From tag:               " + printNull(fromTag) + "\n" +
+                         "To tag:                 " + printNull(toTag) + "\n" +
+                         "Exclude large commits:  " + excludeLargeCommits + "\n" +
+                         "Include merge commits:  " + includeMergeCommits + "\n" +
+                         colorize("\nValues\n", Attribute.UNDERLINE()) +
+                         "Large commit threshold: " + largeThreshold + "\n" +
+                         colorize("================================================\n\n", Attribute.BOLD());
+        System.out.print(s);
+    }
 
-        final StringBuilder sb = new StringBuilder();
-
-        sb.append(colorize("================================================\n", Attribute.BOLD()))
-          .append(colorize("Running with config:\n", Attribute.BOLD()))
-          .append(colorize("------------------------------------------------\n", Attribute.BOLD()))
-          .append(colorize("Performance\n", Attribute.UNDERLINE()))
-          .append("Threads:                ").append(threads).append("\n")
-          .append(colorize("\nGeneral\n", Attribute.UNDERLINE()))
-          .append("Repository:             ").append(git.getRepository().getDirectory()).append("\n")
-          .append("Output:                 ").append(output).append("\n")
-          .append("Algorithm:              ").append(algorithm).append("\n")
-          .append("Combine consecutive:    ").append(combineConsecutive).append("\n")
-          .append("Follow renames:         ").append(followRenames).append("\n")
-          .append(colorize("\nFiltering\n", Attribute.UNDERLINE()))
-          .append("Branch:                 ").append(branch).append("\n")
-          .append("File types:             ").append(fileTypes).append("\n")
-          .append("Author:                 ").append(author).append("\n")
-          .append("From date:              ").append(fromDate).append("\n")
-          .append("To date:                ").append(toDate).append("\n")
-          .append("From commit:            ").append(fromCommit).append("\n")
-          .append("To commit:              ").append(toCommit).append("\n")
-          .append("From tag:               ").append(fromTag).append("\n")
-          .append("To tag:                 ").append(toTag).append("\n")
-          .append("Exclude large commits:  ").append(excludeLargeCommits).append("\n")
-          .append("Include merge commits:  ").append(includeMergeCommits).append("\n")
-          .append(colorize("\nValues\n", Attribute.UNDERLINE()))
-          .append("Large commit threshold: ").append(largeThreshold).append("\n")
-          .append(colorize("================================================\n\n", Attribute.BOLD()));
-
-        System.out.print(sb);
+    private static String printNull(final Object o) {
+        if (o == null) {
+            return "-";
+        } else {
+            return o.toString();
+        }
     }
 
 }

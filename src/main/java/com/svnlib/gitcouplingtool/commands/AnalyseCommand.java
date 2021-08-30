@@ -2,22 +2,21 @@ package com.svnlib.gitcouplingtool.commands;
 
 import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.model.Algorithm;
-import com.svnlib.gitcouplingtool.parsing.CommitParser;
-import com.svnlib.gitcouplingtool.parsing.CommitReader;
+import com.svnlib.gitcouplingtool.pipeline.Pipeline;
 import org.eclipse.jgit.api.Git;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import teetime.framework.Execution;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 @Command(name = "analyse", description = "Performing the coupling algorithm on a given git repository.")
-public class Analyser implements Callable<Integer> {
+public class AnalyseCommand implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The path to the git repository")
     private File path;
@@ -26,13 +25,13 @@ public class Analyser implements Callable<Integer> {
     private Algorithm algorithm = Algorithm.URC;
 
     @Option(names = { "-t", "--threads" }, description = "The number of threads to use")
-    private int threads = Math.min(Runtime.getRuntime().availableProcessors(), 12);
+    private int threads = Runtime.getRuntime().availableProcessors();
 
     @Option(names = { "-o", "--output" }, description = "The path to a file where to save the results")
     public File output = new File(System.getProperty("user.dir") + "/result.json");
 
     @Option(names = { "-b", "--branch" }, description = "Begin traversal at a specific branch instead of HEAD")
-    public String branch;
+    public String branch = "HEAD";
 
     @Option(names = {
             "--file-type"
@@ -86,19 +85,10 @@ public class Analyser implements Callable<Integer> {
         buildConfig();
         Config.print();
 
-        final CommitReader       reader = new CommitReader();
-        final List<CommitParser> parser = new LinkedList<>();
-        for (int i = 0; i < this.threads - 2; i++) {
-            final CommitParser commitParser = new CommitParser(reader.getQueue());
-            commitParser.start();
-            parser.add(commitParser);
-        }
+        final Pipeline            pipeline  = new Pipeline();
+        final Execution<Pipeline> execution = new Execution<>(pipeline);
+        execution.executeBlocking();
 
-        reader.start();
-        reader.join();
-        for (final CommitParser commitParser : parser) {
-            commitParser.join();
-        }
         return 0;
     }
 
