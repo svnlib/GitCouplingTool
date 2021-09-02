@@ -1,6 +1,7 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
     id 'java'
+    id 'org.graalvm.buildtools.native' version "0.9.0"
 }
 
 group 'com.svnlib'
@@ -8,19 +9,38 @@ version '0.0.1'
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:5.12.0.202106070339-r'
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'org.slf4j:slf4j-simple:1.7.32'
+    implementation 'me.tongfei:progressbar:0.9.2'
+    implementation 'info.picocli:picocli:4.6.1'
+    implementation 'com.diogonunes:JColor:5.0.1'
+    implementation 'net.sourceforge.teetime:teetime:3.0'
+    implementation 'org.jgrapht:jgrapht-core:1.5.1'
+    implementation 'org.jgrapht:jgrapht-io:1.5.1'
+
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
 }
 
 test {
     useJUnitPlatform()
 }
 
+nativeBuild {
+    imageName = "my-app"
+    mainClass = "com.svnlib.gitcouplingtool.Main"
+    verbose = true
+    fallback = false
+}
+
 jar {
     manifest {
-        attributes 'Main-Class': 'Main'
+        attributes 'Main-Class': 'com.svnlib.gitcouplingtool.Main'
     }
 }
