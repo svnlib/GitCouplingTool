@@ -37,7 +37,20 @@ public class DiffTool {
         final AbstractTreeIterator newTreeIter =
                 new CanonicalTreeParser(null, this.objectReader, commit.getTree());
         final AbstractTreeIterator oldTreeIter = getParentTreeIterator(commit);
-        
+
+        return diff(newTreeIter, oldTreeIter);
+    }
+
+    public List<DiffEntry> diffWithEmpty(final RevCommit commit) throws IOException {
+        final AbstractTreeIterator newTreeIter =
+                new CanonicalTreeParser(null, this.objectReader, commit.getTree());
+        final AbstractTreeIterator oldTreeIter = new EmptyTreeIterator();
+
+        return diff(newTreeIter, oldTreeIter);
+    }
+
+    public List<DiffEntry> diff(final AbstractTreeIterator newTreeIter, final AbstractTreeIterator oldTreeIter) throws
+                                                                                                                IOException {
         return this.df.scan(oldTreeIter, newTreeIter);
     }
 

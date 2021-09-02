@@ -1,6 +1,8 @@
 package com.svnlib.gitcouplingtool.pipeline.stages;
 
 import com.svnlib.gitcouplingtool.Config;
+import com.svnlib.gitcouplingtool.store.ArtifactStore;
+import com.svnlib.gitcouplingtool.util.DiffTool;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -16,12 +18,14 @@ public class CommitProducerStage extends AbstractProducerStage<RevCommit> {
 
     public CommitProducerStage() throws IOException {
         final Repository repository = Config.git.getRepository();
-        final ObjectId   objectId   = repository.resolve(getHeadRefFromConfig() + "^{commit}");
-
-        this.walk = new RevWalk(repository);
-        this.walk.markStart(this.walk.parseCommit(objectId));
 
         this.lastCommit = getLastCommitFromConfig();
+        final RevCommit firstCommit = getFirstCommitFromConfig();
+
+        this.walk = new RevWalk(repository);
+        this.walk.markStart(firstCommit);
+
+        initializeArtifactStore(firstCommit);
     }
 
     @Override
@@ -37,22 +41,39 @@ public class CommitProducerStage extends AbstractProducerStage<RevCommit> {
         this.workCompleted();
     }
 
-    private String getHeadRefFromConfig() {
+    /**
+     * Returns the first commit to start the walk at by parsing the configured options (e.g. --from-commit, --branch)
+     *
+     * @return the best matching commit
+     */
+    private RevCommit getFirstCommitFromConfig() throws IOException {
+        final Repository repository = Config.git.getRepository();
+
+        String ref = null;
         if (Config.fromCommit != null) {
-            return Config.fromCommit;
+            ref = Config.fromCommit;
+        } else if (Config.fromTag != null) {
+            ref = Config.fromTag;
+        } else if (Config.branch != null) {
+            ref = Config.branch;
         }
-        if (Config.fromTag != null) {
-            return Config.fromTag;
+
+        if (ref == null) {
+            ref = "HEAD";
         }
-        if (Config.branch != null) {
-            return Config.branch;
-        }
-        throw new IllegalArgumentException("No initial reference given");
+
+        final ObjectId objectId = repository.resolve(ref + "^{commit}");
+        final RevWalk  walk     = new RevWalk(repository);
+
+        final RevCommit commit = walk.parseCommit(objectId);
+        walk.close();
+        return commit;
     }
 
     private RevCommit getLastCommitFromConfig() throws IOException {
         final Repository repository = Config.git.getRepository();
-        String           ref        = null;
+
+        String ref = null;
         if (Config.toCommit != null) {
             ref = Config.toCommit;
         } else if (Config.toTag != null) {
@@ -69,6 +90,11 @@ public class CommitProducerStage extends AbstractProducerStage<RevCommit> {
         final RevCommit commit = walk.parseCommit(objectId);
         walk.close();
         return commit;
+    }
+
+    private void initializeArtifactStore(final RevCommit initialCommit) throws IOException {
+        final DiffTool diffTool = new DiffTool();
+        ArtifactStore.INSTANCE.initialize(diffTool.diffWithEmpty(initialCommit));
     }
 
 }

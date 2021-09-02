@@ -1,29 +1,45 @@
 package com.svnlib.gitcouplingtool.pipeline.stages;
 
+import com.svnlib.gitcouplingtool.Config;
+import com.svnlib.gitcouplingtool.algorithm.AbstractAlgorithm;
+import com.svnlib.gitcouplingtool.model.Artifact;
 import com.svnlib.gitcouplingtool.model.Commit;
-import me.tongfei.progressbar.ProgressBar;
-import me.tongfei.progressbar.ProgressBarBuilder;
-import me.tongfei.progressbar.ProgressBarStyle;
-import teetime.framework.AbstractConsumerStage;
+import com.svnlib.gitcouplingtool.store.ArtifactStore;
+import teetime.stage.basic.AbstractFilter;
 
-public class CommitAnalysisStage extends AbstractConsumerStage<Commit> {
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.Set;
 
-    private final ProgressBar pb = new ProgressBarBuilder()
-            .setUnit(" Commits", 1)
-            .showSpeed()
-            .setUpdateIntervalMillis(100)
-            .setStyle(ProgressBarStyle.ASCII)
-            .setTaskName("Progress")
-            .build();
+public class CommitAnalysisStage extends AbstractFilter<Commit> {
+
+    private final AbstractAlgorithm algorithm;
+
+    public CommitAnalysisStage() {
+        this.algorithm = Config.algorithm.getAlgorithm();
+    }
 
     @Override
-    protected void execute(final Commit element) {
-        this.pb.step();
+    protected void execute(final Commit commit) {
+        final Set<Artifact> artifacts = ArtifactStore.INSTANCE.parseCommit(commit);
+        this.algorithm.addChangedArtifacts(new LinkedList<>(artifacts));
+        this.outputPort.send(commit);
     }
 
     @Override
     protected void onTerminating() {
-        this.pb.close();
+        try {
+            final Writer bufferedWriter =
+                    new BufferedWriter(new FileWriter(Config.output, StandardCharsets.UTF_8, false));
+            this.algorithm.exportGraph(bufferedWriter);
+            bufferedWriter.close();
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
         super.onTerminating();
     }
 

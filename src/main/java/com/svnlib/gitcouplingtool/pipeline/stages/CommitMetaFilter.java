@@ -8,7 +8,7 @@ import teetime.stage.basic.AbstractFilter;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 
-public class CommitFilter extends AbstractFilter<RevCommit> {
+public class CommitMetaFilter extends AbstractFilter<RevCommit> {
 
     @Override
     protected void execute(final RevCommit element) {

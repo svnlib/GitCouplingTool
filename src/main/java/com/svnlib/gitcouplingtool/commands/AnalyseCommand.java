@@ -2,12 +2,13 @@ package com.svnlib.gitcouplingtool.commands;
 
 import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.model.Algorithm;
-import com.svnlib.gitcouplingtool.pipeline.Pipeline;
+import com.svnlib.gitcouplingtool.model.Commit;
+import com.svnlib.gitcouplingtool.pipeline.AnalysePipeline;
+import com.svnlib.gitcouplingtool.pipeline.CommitCollectionPipeline;
 import org.eclipse.jgit.api.Git;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import teetime.framework.Execution;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,9 +86,12 @@ public class AnalyseCommand implements Callable<Integer> {
         buildConfig();
         Config.print();
 
-        final Pipeline            pipeline  = new Pipeline();
-        final Execution<Pipeline> execution = new Execution<>(pipeline);
-        execution.executeBlocking();
+        final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
+        commitCollectionPipeline.execute();
+        final List<Commit> commits = commitCollectionPipeline.getCommits();
+
+        final AnalysePipeline analysePipeline = new AnalysePipeline(commits);
+        analysePipeline.execute();
 
         return 0;
     }
