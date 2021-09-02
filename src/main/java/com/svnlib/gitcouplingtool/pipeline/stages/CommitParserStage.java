@@ -25,7 +25,7 @@ public class CommitParserStage extends AbstractTransformation<RevCommit, Commit>
     @Override
     protected void execute(final RevCommit revCommit) throws Exception {
         final List<DiffEntry> diffs = this.diff.diff(revCommit);
-        this.outputPort.send(new Commit(revCommit.getId().name(), revCommit.getCommitTime(), filterDiffs(diffs)));
+        this.outputPort.send(new Commit(revCommit.getId().name(), filterDiffs(diffs)));
     }
 
     /**

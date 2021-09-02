@@ -1,6 +1,7 @@
 package com.svnlib.gitcouplingtool.commands;
 
 import com.svnlib.gitcouplingtool.Config;
+import com.svnlib.gitcouplingtool.algorithm.AbstractAlgorithm;
 import com.svnlib.gitcouplingtool.model.Algorithm;
 import com.svnlib.gitcouplingtool.model.Commit;
 import com.svnlib.gitcouplingtool.pipeline.AnalysePipeline;
@@ -86,14 +87,20 @@ public class AnalyseCommand implements Callable<Integer> {
         buildConfig();
         Config.print();
 
-        final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
-        commitCollectionPipeline.execute();
-        final List<Commit> commits = commitCollectionPipeline.getCommits();
+        final AbstractAlgorithm algorithm = Config.algorithm.getAlgorithm();
 
-        final AnalysePipeline analysePipeline = new AnalysePipeline(commits);
+        final List<Commit> commits = collectCommits();
+
+        final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
         analysePipeline.execute();
 
         return 0;
+    }
+
+    private List<Commit> collectCommits() throws IOException {
+        final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
+        commitCollectionPipeline.execute();
+        return commitCollectionPipeline.getCommits();
     }
 
     private void buildConfig() throws IOException {
