@@ -20,7 +20,7 @@ public class Artifact {
         this.currentPath = this.originalPath;
     }
 
-    public void parseDiffEntry(final DiffEntry diffEntry) {
+    public synchronized void parseDiffEntry(final DiffEntry diffEntry) {
         if (!this.editable) {
             return;
         }
@@ -36,24 +36,28 @@ public class Artifact {
         }
     }
 
-    public String getOriginalPath() {
+    public UUID getId() {
+        return this.id;
+    }
+
+    public synchronized String getOriginalPath() {
         return this.originalPath;
     }
 
-    public String getCurrentPath() {
+    public synchronized String getCurrentPath() {
         return this.currentPath;
     }
 
-    public int getChangeCount() {
+    public synchronized int getChangeCount() {
         return this.changeCount;
     }
 
-    public boolean isEditable() {
+    public synchronized boolean isEditable() {
         return this.editable;
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public synchronized boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -65,7 +69,7 @@ public class Artifact {
     }
 
     @Override
-    public int hashCode() {
+    public synchronized int hashCode() {
         return this.id.hashCode();
     }
 

@@ -13,17 +13,18 @@ public class ArtifactStore {
 
     public static final ArtifactStore INSTANCE = new ArtifactStore();
 
-    private final Set<Artifact> editableArtifacts = new HashSet<>();
-    private final Set<Artifact> artifacts         = new HashSet<>();
+    private final Set<Artifact> artifacts = new HashSet<>();
 
     private ArtifactStore() {
     }
 
     public void initialize(final List<DiffEntry> diffs) {
-        for (final DiffEntry diff : diffs) {
-            final Artifact artifact = new Artifact(diff);
-            this.editableArtifacts.add(artifact);
-            Config.algorithm.getAlgorithm().addArtifact(artifact);
+        synchronized (this.artifacts) {
+            for (final DiffEntry diff : diffs) {
+                final Artifact artifact = new Artifact(diff);
+                this.artifacts.add(artifact);
+                Config.algorithm.getAlgorithm().addArtifact(artifact);
+            }
         }
     }
 
@@ -36,17 +37,13 @@ public class ArtifactStore {
             if (artifact != null) {
                 artifact.parseDiffEntry(diff);
                 effectedArtifacts.add(artifact);
-                if (!artifact.isEditable()) {
-                    this.editableArtifacts.remove(artifact);
-                    this.artifacts.add(artifact);
-                }
             }
         }
         return effectedArtifacts;
     }
 
     public Artifact getArtifactByPath(final String path) {
-        for (final Artifact artifact : this.editableArtifacts) {
+        for (final Artifact artifact : this.artifacts) {
             if (artifact.getCurrentPath().equals(path)) {
                 return artifact;
             }
@@ -55,7 +52,9 @@ public class ArtifactStore {
     }
 
     public Set<Artifact> getArtifacts() {
-        return this.artifacts;
+        synchronized (this.artifacts) {
+            return this.artifacts;
+        }
     }
 
 }
