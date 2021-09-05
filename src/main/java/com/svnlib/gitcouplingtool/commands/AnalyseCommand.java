@@ -11,8 +11,11 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -93,6 +96,11 @@ public class AnalyseCommand implements Callable<Integer> {
 
         final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
         analysePipeline.execute();
+
+        final BufferedWriter writer =
+                new BufferedWriter(new FileWriter(Config.output, StandardCharsets.UTF_8, false));
+        algorithm.exportGraph(writer);
+        writer.close();
 
         return 0;
     }

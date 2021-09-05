@@ -1,18 +1,15 @@
 package com.svnlib.gitcouplingtool.graph;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractGraph<V, E extends AbstractEdge<V>> {
 
-    protected final Set<V>          vertex = new HashSet<>();
-    protected final Map<Integer, E> edges  = new HashMap<>();
+    protected final Set<V>          nodes = new HashSet<>();
+    protected final Map<Integer, E> edges = new HashMap<>();
 
     public void addVertex(final V v) {
-        synchronized (this.vertex) {
-            this.vertex.add(v);
+        synchronized (this.nodes) {
+            this.nodes.add(v);
         }
     }
 
@@ -30,12 +27,20 @@ public abstract class AbstractGraph<V, E extends AbstractEdge<V>> {
         return edge;
     }
 
+    public Collection<V> getNodes() {
+        return this.nodes;
+    }
+
+    public Collection<E> getEdges() {
+        return this.edges.values();
+    }
+
     protected abstract E createEdge(V src, V dest, double weight);
-    
+
     @Override
     public String toString() {
         return "AbstractGraph{" +
-               "vertex=" + this.vertex +
+               "nodes=" + this.nodes +
                ", edges=" + this.edges.values() +
                '}';
     }

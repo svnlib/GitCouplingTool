@@ -36,6 +36,10 @@ public class Artifact {
         }
     }
 
+    public UUID getId() {
+        return this.id;
+    }
+
     public synchronized String getOriginalPath() {
         return this.originalPath;
     }
