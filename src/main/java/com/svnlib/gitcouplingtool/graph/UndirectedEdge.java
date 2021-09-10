@@ -1,11 +1,11 @@
 package com.svnlib.gitcouplingtool.graph;
 
-public class UndirectedEdge<V> extends AbstractEdge<V> {
+public class UndirectedEdge extends AbstractEdge {
 
-    public UndirectedEdge(final V src, final V dest, final double weight) {
+    public UndirectedEdge(final String src, final String dest, final double weight) {
         super(src, dest, weight);
     }
-    
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -16,8 +16,8 @@ public class UndirectedEdge<V> extends AbstractEdge<V> {
             return false;
         }
 
-        final Object oSrc  = ((UndirectedEdge<?>) o).src;
-        final Object oDest = ((UndirectedEdge<?>) o).dest;
+        final Object oSrc  = ((UndirectedEdge) o).src;
+        final Object oDest = ((UndirectedEdge) o).dest;
 
         return (this.src.equals(oSrc) && this.dest.equals(oDest)) || (this.src.equals(oDest) && this.dest.equals(oSrc));
     }

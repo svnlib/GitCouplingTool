@@ -1,83 +1,71 @@
 package com.svnlib.gitcouplingtool.algorithm;
 
+import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.graph.AbstractEdge;
 import com.svnlib.gitcouplingtool.graph.UndirectedEdge;
 import com.svnlib.gitcouplingtool.graph.UndirectedGraph;
 import com.svnlib.gitcouplingtool.graph.io.JSONExporter;
-import com.svnlib.gitcouplingtool.model.Artifact;
+import com.svnlib.gitcouplingtool.util.ProgressBarUtils;
+import com.svnlib.gitcouplingtool.util.PushList;
+import me.tongfei.progressbar.ProgressBar;
 
-import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-public class UndirectedRawCounting extends AbstractAlgorithm {
+public class UndirectedRawCounting extends CountingAlgorithm {
 
-    UndirectedGraph<Artifact> graph = new UndirectedGraph<>();
+    private final UndirectedGraph        graph;
+    final         PushList<AbstractEdge> edges;
 
-    @Override
-    public void addArtifact(final Artifact artifact) {
-        this.graph.addVertex(artifact);
+    public UndirectedRawCounting(final Collection<Artifact> artifacts) {
+        super(artifacts);
+        this.graph = new UndirectedGraph();
+        this.edges = new PushList<>(Config.edgeCount);
     }
 
     @Override
-    public void addChangedArtifacts(final List<Artifact> artifacts) {
-        for (int i = 0; i < artifacts.size(); i++) {
-            for (int j = i + 1; j < artifacts.size(); j++) {
-                final Artifact                 src  = artifacts.get(i);
-                final Artifact                 dest = artifacts.get(j);
-                final UndirectedEdge<Artifact> edge = this.graph.findOrCreateEdge(src, dest, 0);
-                synchronized (edge) {
-                    edge.setWeight(edge.getWeight() + 1);
-                }
-            }
-        }
+    public void execute() {
+        super.execute();
+
+        final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Building Graph", "Steps")
+                                               .setInitialMax(Config.edgeCount).build();
+
+        this.edges.toList().forEach(e -> {
+            this.graph.putEdge((UndirectedEdge) e);
+            this.graph.addNode(e.getSrc());
+            this.graph.addNode(e.getDest());
+        });
+        pb.close();
     }
 
     @Override
-    public void exportGraph(final Writer writer) throws IOException {
-        final JSONExporter<Artifact, UndirectedEdge<Artifact>> exporter = new JSONExporter<>(writer) {
+    protected void addToGraph(final Artifact a, final Artifact b, final int aCount, final int bCount,
+                              final int commonCount) {
+        final UndirectedEdge edge =
+                this.graph.createEdge(a.getOriginalPath(), b.getOriginalPath(), commonCount);
+        this.edges.add(edge);
+    }
+
+    @Override
+    public void export(final Writer writer) throws Exception {
+        final JSONExporter<UndirectedEdge> exporter = new JSONExporter<>(writer) {
+
             @Override
-            protected Collection<Artifact> filterNodes(final Collection<Artifact> nodes) {
-                return nodes.stream()
-                            .filter(node -> node.getChangeCount() > 1)
-                            .sorted(Comparator.comparingDouble(Artifact::getChangeCount).reversed())
-                            .collect(Collectors.toList());
+            protected Map<String, Object> nodeAttributes(final String node) {
+                return Map.of(
+                        "id",
+                        node);
             }
 
             @Override
-            protected Collection<UndirectedEdge<Artifact>> filterEdges(
-                    final Collection<UndirectedEdge<Artifact>> edges) {
-                final AtomicInteger count = new AtomicInteger();
-                return edges.stream()
-                            .filter(edge -> edge.getWeight() > 1)
-                            .sorted(Comparator.comparingDouble(UndirectedEdge<Artifact>::getWeight).reversed())
-                            .filter(o -> count.getAndIncrement() < 100)
-                            .collect(Collectors.toList());
-            }
-
-            @Override
-            protected Map<String, Object> nodeAttributes(final Artifact node) {
+            protected Map<String, Object> edgeAttributes(final UndirectedEdge edge) {
                 return Map.of("id",
-                              node.getId(),
-                              "label",
-                              node.getOriginalPath(),
-                              "value",
-                              node.getChangeCount());
-            }
-
-            @Override
-            protected Map<String, Object> edgeAttributes(final AbstractEdge<Artifact> edge) {
-                return Map.of("id",
-                              edge.getSrc().getId() + "::" + edge.getDest().getId(),
+                              edge.getSrc() + "::" + edge.getDest(),
                               "start",
-                              edge.getSrc().getId(),
+                              edge.getSrc(),
                               "end",
-                              edge.getDest().getId(),
+                              edge.getDest(),
                               "weight",
                               (int) edge.getWeight(),
                               "directed",

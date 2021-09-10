@@ -1,7 +1,7 @@
 package com.svnlib.gitcouplingtool.pipeline.stages;
 
-import com.svnlib.gitcouplingtool.model.Artifact;
-import com.svnlib.gitcouplingtool.store.ArtifactStore;
+import com.svnlib.gitcouplingtool.algorithm.Artifact;
+import com.svnlib.gitcouplingtool.algorithm.ArtifactStore;
 import org.eclipse.jgit.diff.DiffEntry;
 import teetime.stage.basic.AbstractTransformation;
 

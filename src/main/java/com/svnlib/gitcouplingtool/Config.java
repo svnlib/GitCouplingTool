@@ -14,7 +14,8 @@ public class Config {
 
     public static Git git;
 
-    public static int          threads;
+    public static int          threads = Runtime.getRuntime().availableProcessors();
+    public static int          edgeCount;
     public static Algorithm    algorithm;
     public static File         output;
     public static String       branch;
@@ -57,6 +58,7 @@ public class Config {
                          "Exclude large commits:  " + excludeLargeCommits + "\n" +
                          "Include merge commits:  " + includeMergeCommits + "\n" +
                          colorize("\nValues\n", Attribute.UNDERLINE()) +
+                         "Edge count:             " + edgeCount + "\n" +
                          "Large commit threshold: " + largeThreshold + "\n" +
                          colorize("================================================\n\n", Attribute.BOLD());
         System.out.print(s);

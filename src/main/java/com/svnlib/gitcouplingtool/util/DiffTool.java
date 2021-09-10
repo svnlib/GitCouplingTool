@@ -32,6 +32,12 @@ public class DiffTool {
         this.df.setDetectRenames(Config.followRenames);
     }
 
+    public void close() {
+        this.walk.close();
+        this.objectReader.close();
+        this.df.close();
+    }
+
     public List<DiffEntry> diff(final RevCommit commit) throws IOException {
         final AbstractTreeIterator newTreeIter =
                 new CanonicalTreeParser(null, this.objectReader, commit.getTree());
@@ -50,7 +56,7 @@ public class DiffTool {
             this.walk.parseHeaders(commit2);
         }
         final AbstractTreeIterator oldTreeIter = new CanonicalTreeParser(null, this.objectReader, commit2.getTree());
-        
+
         return diff(newTreeIter, oldTreeIter);
     }
 

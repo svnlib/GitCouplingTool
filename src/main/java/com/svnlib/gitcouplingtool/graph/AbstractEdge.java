@@ -1,22 +1,22 @@
 package com.svnlib.gitcouplingtool.graph;
 
-public abstract class AbstractEdge<V> {
+public abstract class AbstractEdge implements Comparable<AbstractEdge> {
 
-    protected final V      src;
-    protected final V      dest;
-    protected       double weight;
+    protected final String src;
+    protected final String dest;
+    protected final double weight;
 
-    public AbstractEdge(final V src, final V dest, final double weight) {
+    public AbstractEdge(final String src, final String dest, final double weight) {
         this.src = src;
         this.dest = dest;
         this.weight = weight;
     }
 
-    public V getSrc() {
+    public String getSrc() {
         return this.src;
     }
 
-    public V getDest() {
+    public String getDest() {
         return this.dest;
     }
 
@@ -24,8 +24,9 @@ public abstract class AbstractEdge<V> {
         return this.weight;
     }
 
-    public void setWeight(final double weight) {
-        this.weight = weight;
+    @Override
+    public int compareTo(final AbstractEdge o) {
+        return Double.compare(this.weight, o.weight);
     }
 
     @Override
