@@ -3,10 +3,10 @@ package com.svnlib.gitcouplingtool.commands;
 import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.algorithm.AbstractAlgorithm;
 import com.svnlib.gitcouplingtool.model.Algorithm;
-import com.svnlib.gitcouplingtool.model.Commit;
 import com.svnlib.gitcouplingtool.pipeline.AnalysePipeline;
 import com.svnlib.gitcouplingtool.pipeline.CommitCollectionPipeline;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.diff.DiffEntry;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -76,7 +76,7 @@ public class AnalyseCommand implements Callable<Integer> {
     @Option(names = {
             "-cc",
             "--combine-consecutive"
-    }, description = "Combine consecutive commits in a given interval e.g. \"1d\" or \"5m\"")
+    }, description = "Combine consecutive commits in a given interval in seconds")
     public int combineConsecutive;
 
     @Option(names = {
@@ -92,7 +92,7 @@ public class AnalyseCommand implements Callable<Integer> {
 
         final AbstractAlgorithm algorithm = Config.algorithm.getAlgorithm();
 
-        final List<Commit> commits = collectCommits();
+        final List<List<DiffEntry>> commits = collectCommits();
 
         final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
         analysePipeline.execute();
@@ -105,7 +105,7 @@ public class AnalyseCommand implements Callable<Integer> {
         return 0;
     }
 
-    private List<Commit> collectCommits() throws IOException {
+    private List<List<DiffEntry>> collectCommits() throws IOException {
         final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
         commitCollectionPipeline.execute();
         return commitCollectionPipeline.getCommits();

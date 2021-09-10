@@ -2,7 +2,6 @@ package com.svnlib.gitcouplingtool.store;
 
 import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.model.Artifact;
-import com.svnlib.gitcouplingtool.model.Commit;
 import org.eclipse.jgit.diff.DiffEntry;
 
 import java.util.HashSet;
@@ -28,9 +27,9 @@ public class ArtifactStore {
         }
     }
 
-    public Set<Artifact> parseCommit(final Commit commit) {
+    public Set<Artifact> parseDiffs(final List<DiffEntry> diffs) {
         final Set<Artifact> effectedArtifacts = new HashSet<>();
-        for (final DiffEntry diff : commit.getDiffs()) {
+        for (final DiffEntry diff : diffs) {
             final String newPath = diff.getNewPath();
 
             final Artifact artifact = getArtifactByPath(newPath);

@@ -3,26 +3,27 @@ package com.svnlib.gitcouplingtool.pipeline;
 import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.algorithm.AbstractAlgorithm;
 import com.svnlib.gitcouplingtool.model.Artifact;
-import com.svnlib.gitcouplingtool.model.Commit;
 import com.svnlib.gitcouplingtool.pipeline.stages.AlgorithmStage;
 import com.svnlib.gitcouplingtool.pipeline.stages.ArtifactStoreStage;
 import com.svnlib.gitcouplingtool.pipeline.stages.ProgressBarStage;
 import me.tongfei.progressbar.ProgressBarStyle;
+import org.eclipse.jgit.diff.DiffEntry;
 import teetime.stage.InitialElementProducer;
 import teetime.stage.basic.distributor.Distributor;
 import teetime.stage.basic.merger.Merger;
 
 import java.util.Collection;
+import java.util.List;
 
 public class AnalysePipeline extends AbstractPipeline {
 
-    public AnalysePipeline(final Collection<Commit> commits, final AbstractAlgorithm algorithm) {
-        final InitialElementProducer<Commit>         producer              = new InitialElementProducer<>(commits);
-        final Distributor<Commit>                    commitDistributor     = new Distributor<>();
-        final Merger<Collection<Artifact>>           collectionMerger      = new Merger<>();
-        final Distributor<Collection<Artifact>>      collectionDistributor = new Distributor<>();
-        final Merger<Collection<Artifact>>           progressMerger        = new Merger<>();
-        final ProgressBarStage<Collection<Artifact>> progressBarStage      = new ProgressBarStage<>();
+    public AnalysePipeline(final List<List<DiffEntry>> commits, final AbstractAlgorithm algorithm) {
+        final InitialElementProducer<List<DiffEntry>> producer              = new InitialElementProducer<>(commits);
+        final Distributor<List<DiffEntry>>            commitDistributor     = new Distributor<>();
+        final Merger<Collection<Artifact>>            collectionMerger      = new Merger<>();
+        final Distributor<Collection<Artifact>>       collectionDistributor = new Distributor<>();
+        final Merger<Collection<Artifact>>            progressMerger        = new Merger<>();
+        final ProgressBarStage<Collection<Artifact>>  progressBarStage      = new ProgressBarStage<>();
         progressBarStage.builder()
                         .setUnit(" Commits", 1)
                         .showSpeed()

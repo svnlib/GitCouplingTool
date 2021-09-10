@@ -33,11 +33,24 @@ public class DiffTool {
     }
 
     public List<DiffEntry> diff(final RevCommit commit) throws IOException {
-
         final AbstractTreeIterator newTreeIter =
                 new CanonicalTreeParser(null, this.objectReader, commit.getTree());
         final AbstractTreeIterator oldTreeIter = getParentTreeIterator(commit);
 
+        return diff(newTreeIter, oldTreeIter);
+    }
+
+    public List<DiffEntry> diff(final RevCommit commit1, final RevCommit commit2) throws IOException {
+        if (commit1.getTree() == null) {
+            this.walk.parseHeaders(commit1);
+        }
+        final AbstractTreeIterator newTreeIter = new CanonicalTreeParser(null, this.objectReader, commit1.getTree());
+
+        if (commit2.getTree() == null) {
+            this.walk.parseHeaders(commit2);
+        }
+        final AbstractTreeIterator oldTreeIter = new CanonicalTreeParser(null, this.objectReader, commit2.getTree());
+        
         return diff(newTreeIter, oldTreeIter);
     }
 
