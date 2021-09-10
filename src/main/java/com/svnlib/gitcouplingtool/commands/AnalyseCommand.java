@@ -1,11 +1,9 @@
 package com.svnlib.gitcouplingtool.commands;
 
 import com.svnlib.gitcouplingtool.Config;
-import com.svnlib.gitcouplingtool.algorithm.Artifact;
-import com.svnlib.gitcouplingtool.algorithm.ArtifactStore;
-import com.svnlib.gitcouplingtool.algorithm.CouplingAlgorithm;
-import com.svnlib.gitcouplingtool.algorithm.UndirectedRawCounting;
+import com.svnlib.gitcouplingtool.algorithm.*;
 import com.svnlib.gitcouplingtool.model.Algorithm;
+import com.svnlib.gitcouplingtool.model.ExportFormat;
 import com.svnlib.gitcouplingtool.pipeline.AnalysePipeline;
 import com.svnlib.gitcouplingtool.pipeline.CommitCollectionPipeline;
 import com.svnlib.gitcouplingtool.util.GitUtils;
@@ -36,14 +34,17 @@ public class AnalyseCommand implements Callable<Integer> {
     @Option(names = {
             "-e",
             "--edges"
-    }, description = "The number of edges with the highest coupling between files to export.")
+    }, description = "The number of edges with the highest coupling between files to export")
     private int edgeCount = 100;
 
     @Option(names = { "-a", "--algorithm" }, description = "URC or DRC")
     private Algorithm algorithm = Algorithm.URC;
 
+    @Option(names = { "-f", "--format" }, description = "The the file format of the exported file")
+    public ExportFormat format = ExportFormat.GML;
+
     @Option(names = { "-o", "--output" }, description = "The path to a file where to save the results")
-    public File output = new File(System.getProperty("user.dir") + "/result.json");
+    public File output = new File(System.getProperty("user.dir") + "/result." + this.format.getFileExtension());
 
     @Option(names = { "-b", "--branch" }, description = "Begin traversal at a specific branch instead of HEAD")
     public String branch = "HEAD";
@@ -111,10 +112,10 @@ public class AnalyseCommand implements Callable<Integer> {
                 algorithm = new UndirectedRawCounting(artifacts);
                 break;
             case DRC:
-                algorithm = new UndirectedRawCounting(artifacts);
+                algorithm = new DirectedRawCounting(artifacts);
                 break;
             default:
-                algorithm = new UndirectedRawCounting(artifacts);
+                return -1;
         }
 
         performAlgorithm(commits, algorithm);
@@ -158,6 +159,7 @@ public class AnalyseCommand implements Callable<Integer> {
     private void buildConfig() throws IOException {
         Config.edgeCount = this.edgeCount;
         Config.algorithm = this.algorithm;
+        Config.format = this.format;
         Config.output = this.output;
         Config.branch = this.branch;
         Config.fileTypes = this.fileTypes;

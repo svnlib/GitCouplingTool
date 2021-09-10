@@ -4,6 +4,8 @@ import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.graph.AbstractEdge;
 import com.svnlib.gitcouplingtool.graph.UndirectedEdge;
 import com.svnlib.gitcouplingtool.graph.UndirectedGraph;
+import com.svnlib.gitcouplingtool.graph.io.AbstractExporter;
+import com.svnlib.gitcouplingtool.graph.io.GMLExporter;
 import com.svnlib.gitcouplingtool.graph.io.JSONExporter;
 import com.svnlib.gitcouplingtool.util.ProgressBarUtils;
 import com.svnlib.gitcouplingtool.util.PushList;
@@ -49,15 +51,22 @@ public class UndirectedRawCounting extends CountingAlgorithm {
 
     @Override
     public void export(final Writer writer) throws Exception {
-        final JSONExporter<UndirectedEdge> exporter = new JSONExporter<>(writer) {
+        final AbstractExporter<UndirectedEdge> exporter;
+        switch (Config.format) {
+            case JSON:
+                exporter = getJsonExporter(writer);
+                break;
+            case GML:
+                exporter = getGmlExporter(writer);
+                break;
+            default:
+                return;
+        }
+        exporter.export(this.graph);
+    }
 
-            @Override
-            protected Map<String, Object> nodeAttributes(final String node) {
-                return Map.of(
-                        "id",
-                        node);
-            }
-
+    private JSONExporter<UndirectedEdge> getJsonExporter(final Writer writer) {
+        return new JSONExporter<>(writer) {
             @Override
             protected Map<String, Object> edgeAttributes(final UndirectedEdge edge) {
                 return Map.of("id",
@@ -69,10 +78,25 @@ public class UndirectedRawCounting extends CountingAlgorithm {
                               "weight",
                               (int) edge.getWeight(),
                               "directed",
-                              false);
+                              0);
             }
         };
-        exporter.export(this.graph);
+    }
+
+    private GMLExporter<UndirectedEdge> getGmlExporter(final Writer writer) {
+        return new GMLExporter<>(writer) {
+            @Override
+            protected Map<String, Object> edgeAttributes(final UndirectedEdge edge) {
+                return Map.of("source",
+                              edge.getSrc(),
+                              "target",
+                              edge.getDest(),
+                              "value",
+                              (int) edge.getWeight(),
+                              "directed",
+                              0);
+            }
+        };
     }
 
 }

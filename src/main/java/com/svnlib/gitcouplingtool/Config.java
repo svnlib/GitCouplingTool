@@ -2,6 +2,7 @@ package com.svnlib.gitcouplingtool;
 
 import com.diogonunes.jcolor.Attribute;
 import com.svnlib.gitcouplingtool.model.Algorithm;
+import com.svnlib.gitcouplingtool.model.ExportFormat;
 import org.eclipse.jgit.api.Git;
 
 import java.io.File;
@@ -18,6 +19,7 @@ public class Config {
     public static int          edgeCount;
     public static Algorithm    algorithm;
     public static File         output;
+    public static ExportFormat format;
     public static String       branch;
     public static List<String> fileTypes;
     public static String       author;
@@ -41,6 +43,7 @@ public class Config {
                          "Threads:                " + threads + "\n" +
                          colorize("\nGeneral\n", Attribute.UNDERLINE()) +
                          "Repository:             " + git.getRepository().getDirectory() + "\n" +
+                         "Format:                 " + format + "\n" +
                          "Output:                 " + output + "\n" +
                          "Algorithm:              " + algorithm + "\n" +
                          "Combine consecutive:    " + combineConsecutive + "\n" +
