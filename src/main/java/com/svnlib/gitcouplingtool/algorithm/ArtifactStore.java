@@ -1,9 +1,8 @@
-package com.svnlib.gitcouplingtool.store;
+package com.svnlib.gitcouplingtool.algorithm;
 
-import com.svnlib.gitcouplingtool.Config;
-import com.svnlib.gitcouplingtool.model.Artifact;
 import org.eclipse.jgit.diff.DiffEntry;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,13 +16,11 @@ public class ArtifactStore {
     private ArtifactStore() {
     }
 
-    public void initialize(final List<DiffEntry> diffs) {
+    public void initialize(final Collection<String> paths) {
         synchronized (this.artifacts) {
-            for (final DiffEntry diff : diffs) {
-                final Artifact artifact = new Artifact(diff);
-                this.artifacts.add(artifact);
-                Config.algorithm.getAlgorithm().addArtifact(artifact);
-            }
+            paths.stream()
+                 .map(Artifact::new)
+                 .forEach(this.artifacts::add);
         }
     }
 
@@ -41,7 +38,7 @@ public class ArtifactStore {
         return effectedArtifacts;
     }
 
-    public Artifact getArtifactByPath(final String path) {
+    private Artifact getArtifactByPath(final String path) {
         for (final Artifact artifact : this.artifacts) {
             if (artifact.getCurrentPath().equals(path)) {
                 return artifact;

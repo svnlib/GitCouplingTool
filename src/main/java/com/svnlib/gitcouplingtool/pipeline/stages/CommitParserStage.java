@@ -39,6 +39,12 @@ public class CommitParserStage extends AbstractTransformation<List<RevCommit>, L
         }
     }
 
+    @Override
+    protected void onTerminating() {
+        this.diff.close();
+        super.onTerminating();
+    }
+
     /**
      * Filters the given list of {@link DiffEntry}s for paths ending with the configured file extensions.
      *

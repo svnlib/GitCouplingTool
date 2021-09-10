@@ -1,22 +1,13 @@
 package com.svnlib.gitcouplingtool.model;
 
-import com.svnlib.gitcouplingtool.algorithm.AbstractAlgorithm;
-import com.svnlib.gitcouplingtool.algorithm.UndirectedRawCounting;
-
 public enum Algorithm {
-    URC("Undirected Raw Counting", new UndirectedRawCounting()),
-    DRC("Directed Raw Counting", null);
+    URC("Undirected Raw Counting"),
+    DRC("Directed Raw Counting");
 
-    private final String            name;
-    private final AbstractAlgorithm algorithm;
+    private final String name;
 
-    Algorithm(final String name, final AbstractAlgorithm algorithm) {
+    Algorithm(final String name) {
         this.name = name;
-        this.algorithm = algorithm;
-    }
-
-    public AbstractAlgorithm getAlgorithm() {
-        return this.algorithm;
     }
 
     @Override

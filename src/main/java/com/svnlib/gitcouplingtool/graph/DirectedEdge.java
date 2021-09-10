@@ -2,9 +2,9 @@ package com.svnlib.gitcouplingtool.graph;
 
 import java.util.Objects;
 
-public class DirectedEdge<V> extends AbstractEdge<V> {
+public class DirectedEdge extends AbstractEdge {
 
-    public DirectedEdge(final V src, final V dest, final double weight) {
+    public DirectedEdge(final String src, final String dest, final double weight) {
         super(src, dest, weight);
     }
 
@@ -18,7 +18,7 @@ public class DirectedEdge<V> extends AbstractEdge<V> {
             return false;
         }
 
-        return this.src.equals(((DirectedEdge<?>) o).src) && this.dest.equals(((DirectedEdge<?>) o).dest);
+        return this.src.equals(((DirectedEdge) o).src) && this.dest.equals(((DirectedEdge) o).dest);
     }
 
     @Override

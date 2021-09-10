@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public abstract class JSONExporter<V, E extends AbstractEdge<V>> {
+public abstract class JSONExporter<E extends AbstractEdge> {
 
     private final Writer writer;
 
@@ -18,15 +18,15 @@ public abstract class JSONExporter<V, E extends AbstractEdge<V>> {
         this.writer = writer;
     }
 
-    public void export(final AbstractGraph<V, E> graph) throws IOException {
+    public void export(final AbstractGraph<E> graph) throws IOException {
         this.writer.write("{\"nodes\":[");
-        this.writer.write(exportNodes(filterNodes(graph.getNodes())));
+        this.writer.write(exportNodes(graph.getNodes()));
         this.writer.write("],\"edges\":[");
-        this.writer.write(exportEdges(filterEdges(graph.getEdges())));
+        this.writer.write(exportEdges(graph.getEdges()));
         this.writer.write("]}");
     }
 
-    private String exportNodes(final Collection<V> nodes) {
+    private String exportNodes(final Collection<String> nodes) {
         final List<String> formattedNodes = nodes.stream()
                                                  .map(node -> mapToJsonObject(nodeAttributes(node)))
                                                  .collect(Collectors.toList());
@@ -60,9 +60,7 @@ public abstract class JSONExporter<V, E extends AbstractEdge<V>> {
         return '"' + o.toString() + '"';
     }
 
-    protected abstract Collection<V> filterNodes(Collection<V> nodes);
-    protected abstract Collection<E> filterEdges(Collection<E> edges);
-    protected abstract Map<String, Object> nodeAttributes(V node);
-    protected abstract Map<String, Object> edgeAttributes(AbstractEdge<V> edge);
+    protected abstract Map<String, Object> nodeAttributes(String node);
+    protected abstract Map<String, Object> edgeAttributes(E edge);
 
 }

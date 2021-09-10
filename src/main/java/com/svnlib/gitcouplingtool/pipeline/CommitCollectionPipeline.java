@@ -2,7 +2,7 @@ package com.svnlib.gitcouplingtool.pipeline;
 
 import com.svnlib.gitcouplingtool.Config;
 import com.svnlib.gitcouplingtool.pipeline.stages.*;
-import me.tongfei.progressbar.ProgressBarStyle;
+import com.svnlib.gitcouplingtool.util.ProgressBarUtils;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import teetime.stage.CollectorSink;
@@ -28,21 +28,15 @@ public class CommitCollectionPipeline extends AbstractPipeline {
         final CommitDiffCountFilter commitDiffCountFilter = new CommitDiffCountFilter();
 
         final ProgressBarStage<List<DiffEntry>> progressBarStage = new ProgressBarStage<>();
-        progressBarStage.builder()
-                        .setUnit(" Commits", 1)
-                        .showSpeed()
-                        .setUpdateIntervalMillis(100)
-                        .setStyle(ProgressBarStyle.ASCII)
-                        .setTaskName("Collecting Commits");
+        ProgressBarUtils.addToBuilder(progressBarStage.builder(), "Collecting", "Commits");
 
         this.collectorStage = new CollectorSink<>(new LinkedList<>());
 
         commitProducerStage.declareActive();
-        combineConsecutiveStage.declareActive();
         revCommitMerger.declareActive();
         commitDiffCountFilter.declareActive();
 
-        final int numDiffThreads = Math.max(Config.threads - 4, 2);
+        final int numDiffThreads = Math.min(Math.max(Config.threads - 4, 2), 6);
         for (int i = 0; i < numDiffThreads; i++) {
             final CommitParserStage commitParserStage = new CommitParserStage();
             commitParserStage.declareActive();

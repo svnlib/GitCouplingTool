@@ -1,10 +1,10 @@
 package com.svnlib.gitcouplingtool.graph;
 
-public class UndirectedGraph<V> extends AbstractGraph<V, UndirectedEdge<V>> {
+public class UndirectedGraph extends AbstractGraph<UndirectedEdge> {
 
     @Override
-    protected UndirectedEdge<V> createEdge(final V src, final V dest, final double weight) {
-        return new UndirectedEdge<>(src, dest, weight);
+    public UndirectedEdge createEdge(final String src, final String dest, final double weight) {
+        return new UndirectedEdge(src, dest, weight);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.svnlib.gitcouplingtool.model;
+package com.svnlib.gitcouplingtool.algorithm;
 
 import org.eclipse.jgit.diff.DiffEntry;
 
@@ -11,12 +11,11 @@ public class Artifact {
     private final String originalPath;
 
     private String  currentPath;
-    private int     changeCount = 0;
-    private boolean editable    = true;
+    private boolean editable = true;
 
-    public Artifact(final DiffEntry diffEntry) {
+    public Artifact(final String originalPath) {
         this.id = UUID.randomUUID();
-        this.originalPath = diffEntry.getNewPath();
+        this.originalPath = originalPath;
         this.currentPath = this.originalPath;
     }
 
@@ -25,7 +24,6 @@ public class Artifact {
             return;
         }
 
-        this.changeCount++;
         switch (diffEntry.getChangeType()) {
             case RENAME:
                 this.currentPath = diffEntry.getOldPath();
@@ -46,10 +44,6 @@ public class Artifact {
 
     public synchronized String getCurrentPath() {
         return this.currentPath;
-    }
-
-    public synchronized int getChangeCount() {
-        return this.changeCount;
     }
 
     public synchronized boolean isEditable() {

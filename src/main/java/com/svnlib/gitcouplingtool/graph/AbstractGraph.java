@@ -2,32 +2,31 @@ package com.svnlib.gitcouplingtool.graph;
 
 import java.util.*;
 
-public abstract class AbstractGraph<V, E extends AbstractEdge<V>> {
+public abstract class AbstractGraph<E extends AbstractEdge> {
 
-    protected final Set<V>          nodes = new HashSet<>();
+    protected final Set<String>     nodes = new HashSet<>();
     protected final Map<Integer, E> edges = new HashMap<>();
 
-    public void addVertex(final V v) {
-        synchronized (this.nodes) {
-            this.nodes.add(v);
-        }
+    public void addNode(final String node) {
+        this.nodes.add(node);
     }
 
-    public E findOrCreateEdge(final V src, final V dest, final double weight) {
-        final E newEdge = createEdge(src, dest, weight);
+    public void putEdge(final String src, final String dest, final double weight) {
+        final E edge = createEdge(src, dest, weight);
+        putEdge(edge);
+    }
 
-        E edge;
+    public void putEdge(final E edge) {
         synchronized (this.edges) {
-            edge = this.edges.get(newEdge.hashCode());
-            if (edge == null) {
-                this.edges.put(newEdge.hashCode(), newEdge);
-                edge = newEdge;
-            }
+            this.edges.put(edge.hashCode(), edge);
         }
-        return edge;
     }
 
-    public Collection<V> getNodes() {
+    public void addEdges(final Collection<E> edges) {
+        edges.forEach(this::putEdge);
+    }
+
+    public Collection<String> getNodes() {
         return this.nodes;
     }
 
@@ -35,7 +34,7 @@ public abstract class AbstractGraph<V, E extends AbstractEdge<V>> {
         return this.edges.values();
     }
 
-    protected abstract E createEdge(V src, V dest, double weight);
+    public abstract E createEdge(String src, String dest, double weight);
 
     @Override
     public String toString() {

@@ -1,10 +1,10 @@
 package com.svnlib.gitcouplingtool.graph;
 
-public class DirectedGraph<V> extends AbstractGraph<V, DirectedEdge<V>> {
+public class DirectedGraph extends AbstractGraph<DirectedEdge> {
 
     @Override
-    protected DirectedEdge<V> createEdge(final V src, final V dest, final double weight) {
-        return new DirectedEdge<>(src, dest, weight);
+    public DirectedEdge createEdge(final String src, final String dest, final double weight) {
+        return new DirectedEdge(src, dest, weight);
     }
 
 }
