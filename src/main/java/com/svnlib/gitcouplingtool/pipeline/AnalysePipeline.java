@@ -15,6 +15,7 @@ import teetime.stage.basic.merger.Merger;
 import java.util.Collection;
 import java.util.List;
 
+/** Pipeline for performing the algorithm on a collection of diff, as well as exporting the resulting graph afterwards. */
 public class AnalysePipeline extends AbstractPipeline {
 
     public AnalysePipeline(final List<List<DiffEntry>> commits, final CouplingAlgorithm algorithm) {

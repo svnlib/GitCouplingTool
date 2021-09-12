@@ -25,20 +25,21 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+/** The main command collecting all options and performing the operations. */
 @Command(name = "analyse", description = "Performing the coupling algorithm on a given git repository.")
 public class AnalyseCommand implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The path to the git repository")
-    private File path;
+    public File path;
 
     @Option(names = {
             "-e",
             "--edges"
     }, description = "The number of edges with the highest coupling between files to export")
-    private int edgeCount = 100;
+    public int edgeCount = 100;
 
     @Option(names = { "-a", "--algorithm" }, description = "URC or DRC")
-    private Algorithm algorithm = Algorithm.URC;
+    public Algorithm algorithm = Algorithm.URC;
 
     @Option(names = { "-f", "--format" }, description = "The the file format of the exported file")
     public ExportFormat format = ExportFormat.GML;
@@ -101,7 +102,7 @@ public class AnalyseCommand implements Callable<Integer> {
         buildConfig();
         Config.print();
 
-        final List<List<DiffEntry>> commits = getCommits();
+        final List<List<DiffEntry>> commits = collectCommits();
         System.gc();
         final Set<Artifact> artifacts = initializeStoreAndGetArtifacts();
         System.gc();
@@ -129,11 +130,23 @@ public class AnalyseCommand implements Callable<Integer> {
         return 0;
     }
 
-    private void performAlgorithm(final List<List<DiffEntry>> commits, final CouplingAlgorithm algorithm) {
-        final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
-        analysePipeline.execute();
+    /**
+     * Creates a {@link CommitCollectionPipeline} and executes it.
+     *
+     * @return a list of lists of {@link DiffEntry} for each commit
+     */
+    private List<List<DiffEntry>> collectCommits() throws IOException {
+        final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
+        commitCollectionPipeline.execute();
+        return commitCollectionPipeline.getCommits();
     }
 
+    /**
+     * Uses the configured first commit to get all files at this commit, initializes the {@link ArtifactStore} with them
+     * and returns the created {@link Artifact}s.
+     *
+     * @return the created {@link Artifact}s
+     */
     private Set<Artifact> initializeStoreAndGetArtifacts() throws IOException {
         Collection<String> paths = GitUtils.getFilesAtCommit(GitUtils.getFirstCommitFromConfig());
         if (Config.fileTypes != null && Config.fileTypes.size() > 0) {
@@ -150,12 +163,18 @@ public class AnalyseCommand implements Callable<Integer> {
         return ArtifactStore.INSTANCE.getArtifacts();
     }
 
-    private List<List<DiffEntry>> getCommits() throws IOException {
-        final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
-        commitCollectionPipeline.execute();
-        return commitCollectionPipeline.getCommits();
+    /**
+     * Performs the given {@link CouplingAlgorithm} on the given commits by using a {@link AnalysePipeline}.
+     *
+     * @param commits   the collected commits
+     * @param algorithm the algorithm to perform on the commits
+     */
+    private void performAlgorithm(final List<List<DiffEntry>> commits, final CouplingAlgorithm algorithm) {
+        final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
+        analysePipeline.execute();
     }
 
+    /** Transfer the options to the global config. */
     private void buildConfig() throws IOException {
         Config.edgeCount = this.edgeCount;
         Config.algorithm = this.algorithm;

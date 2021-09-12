@@ -16,6 +16,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Tool for calculating diffs between commits.
+ */
 public class DiffTool {
 
     private final RevWalk       walk;
@@ -32,12 +35,20 @@ public class DiffTool {
         this.df.setDetectRenames(Config.followRenames);
     }
 
+    /** Closes all internal components. */
     public void close() {
         this.walk.close();
         this.objectReader.close();
         this.df.close();
     }
 
+    /**
+     * Returns the diffs between the given commit and its parent.
+     *
+     * @param commit the commit to get the diff from
+     *
+     * @return a possibly empty list off {@link DiffEntry}s
+     */
     public List<DiffEntry> diff(final RevCommit commit) throws IOException {
         final AbstractTreeIterator newTreeIter =
                 new CanonicalTreeParser(null, this.objectReader, commit.getTree());
@@ -46,6 +57,14 @@ public class DiffTool {
         return diff(newTreeIter, oldTreeIter);
     }
 
+    /**
+     * Returns the diffs between the given commits.
+     *
+     * @param commit1 the first commit
+     * @param commit2 the second commit
+     *
+     * @return a possibly empty list off {@link DiffEntry}s
+     */
     public List<DiffEntry> diff(final RevCommit commit1, final RevCommit commit2) throws IOException {
         if (commit1.getTree() == null) {
             this.walk.parseHeaders(commit1);
@@ -60,6 +79,15 @@ public class DiffTool {
         return diff(newTreeIter, oldTreeIter);
     }
 
+    /**
+     * Returns a list of diffs by comparing the given commit with an {@link EmptyTreeIterator}. Useful to determine all
+     * files available at a given commit.
+     *
+     * @param commit the commit to use
+     *
+     * @return a possibly empty list off {@link DiffEntry}s which are all the type {@link
+     * org.eclipse.jgit.diff.DiffEntry.ChangeType#ADD}.
+     */
     public List<DiffEntry> diffWithEmpty(final RevCommit commit) throws IOException {
         final AbstractTreeIterator newTreeIter =
                 new CanonicalTreeParser(null, this.objectReader, commit.getTree());
@@ -68,11 +96,26 @@ public class DiffTool {
         return diff(newTreeIter, oldTreeIter);
     }
 
+    /**
+     * Calculates the diffs between two {@link AbstractTreeIterator}.
+     *
+     * @param newTreeIter the first iterator
+     * @param oldTreeIter the second iterator
+     *
+     * @return a possibly empty list off {@link DiffEntry}s
+     */
     public List<DiffEntry> diff(final AbstractTreeIterator newTreeIter, final AbstractTreeIterator oldTreeIter) throws
                                                                                                                 IOException {
         return this.df.scan(oldTreeIter, newTreeIter);
     }
 
+    /**
+     * Returns the TreeIterator of the parent commit of the given commit.
+     *
+     * @param commit the commit to get its parent's iterator.
+     *
+     * @return {@link CanonicalTreeParser} if the parent is not null or {@link EmptyTreeIterator} otherwise.
+     */
     private AbstractTreeIterator getParentTreeIterator(final RevCommit commit) throws IOException {
         if (commit.getParentCount() == 0) {
             return new EmptyTreeIterator();

@@ -41,6 +41,14 @@ public class CombineConsecutiveStage extends AbstractTransformation<RevCommit, L
         super.onTerminating();
     }
 
+    /**
+     * Checks if two given {@link PersonIdent} share the same author name and email.
+     *
+     * @param authorA the first author
+     * @param authorB the second author
+     *
+     * @return {@code true} if the name and email is the same and {@code false} otherwise
+     */
     private boolean authorEqual(final PersonIdent authorA, final PersonIdent authorB) {
         if (!authorA.getName().equalsIgnoreCase(authorB.getName())) {
             return false;

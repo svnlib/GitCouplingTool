@@ -3,6 +3,7 @@ package com.svnlib.gitcouplingtool.algorithm;
 import java.io.Writer;
 import java.util.Collection;
 
+/** A general interface for a coupling algorithm. */
 public interface CouplingAlgorithm {
 
     /**

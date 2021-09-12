@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+/** Pipeline for collecting commits, filtering and retrieving diffs. */
 public class CommitCollectionPipeline extends AbstractPipeline {
 
     private final CollectorSink<List<DiffEntry>> collectorStage;
