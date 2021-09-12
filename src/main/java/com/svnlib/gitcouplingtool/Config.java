@@ -11,6 +11,7 @@ import java.util.List;
 
 import static com.diogonunes.jcolor.Ansi.colorize;
 
+/** A static class containing the global config. */
 public class Config {
 
     public static Git git;
@@ -39,9 +40,7 @@ public class Config {
         final String s = colorize("================================================\n", Attribute.BOLD()) +
                          colorize("Running with config:\n", Attribute.BOLD()) +
                          colorize("------------------------------------------------\n", Attribute.BOLD()) +
-                         colorize("Performance\n", Attribute.UNDERLINE()) +
-                         "Threads:                " + threads + "\n" +
-                         colorize("\nGeneral\n", Attribute.UNDERLINE()) +
+                         colorize("General\n", Attribute.UNDERLINE()) +
                          "Repository:             " + git.getRepository().getDirectory() + "\n" +
                          "Format:                 " + format + "\n" +
                          "Output:                 " + output + "\n" +
@@ -63,6 +62,8 @@ public class Config {
                          colorize("\nValues\n", Attribute.UNDERLINE()) +
                          "Edge count:             " + edgeCount + "\n" +
                          "Large commit threshold: " + largeThreshold + "\n" +
+                         colorize("\nPerformance\n", Attribute.UNDERLINE()) +
+                         "Threads:                " + threads + "\n" +
                          colorize("================================================\n\n", Attribute.BOLD());
         System.out.print(s);
     }

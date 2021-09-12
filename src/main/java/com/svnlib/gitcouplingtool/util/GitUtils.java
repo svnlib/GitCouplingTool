@@ -51,6 +51,11 @@ public class GitUtils {
         return commit;
     }
 
+    /**
+     * Get the commit at which the traversal should stop from the global config.
+     *
+     * @return {@code null} if nothing is configured and a specific {@link RevCommit} otherwise.
+     */
     public static RevCommit getLastCommitFromConfig() throws IOException {
         final Repository repository = Config.git.getRepository();
 

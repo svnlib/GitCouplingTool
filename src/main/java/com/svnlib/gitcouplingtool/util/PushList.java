@@ -3,6 +3,12 @@ package com.svnlib.gitcouplingtool.util;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * A special linked list that is able to keep a given number of entries order by {@link Comparable}. If the added item
+ * increases the size over the given max size, the last and smallest element gets removed.
+ *
+ * @param <T> the type of element to store. Must implement {@link Comparable}.
+ */
 public class PushList<T extends Comparable<T>> {
 
     private final long maxSize;
@@ -12,6 +18,11 @@ public class PushList<T extends Comparable<T>> {
 
     public PushList(final long maxSize) {this.maxSize = maxSize;}
 
+    /**
+     * Adds an element to the list and sorts it in.
+     *
+     * @param elem the element to add.
+     */
     public void add(final T elem) {
         this.size++;
 
@@ -52,9 +63,15 @@ public class PushList<T extends Comparable<T>> {
                 this.last = this.last.prev;
                 this.last.next = null;
             }
+            this.size--;
         }
     }
 
+    /**
+     * Converts all elements to a regular {@link LinkedList}.
+     *
+     * @return the {@link LinkedList} of all elements
+     */
     public List<T> toList() {
         final LinkedList<T> list = new LinkedList<>();
 
@@ -83,6 +100,25 @@ public class PushList<T extends Comparable<T>> {
 
         private Node(final T value) {this.value = value;}
 
+        @Override
+        public String toString() {
+            return this.value.toString();
+        }
+
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("PushList{");
+
+        Node n = this.first;
+        while (n != null) {
+            sb.append(n).append(",");
+            n = n.next;
+        }
+        sb.deleteCharAt(sb.lastIndexOf(","));
+
+        return sb.append("}").toString();
     }
 
 }

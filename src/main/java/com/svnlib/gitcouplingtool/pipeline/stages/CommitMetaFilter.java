@@ -17,6 +17,13 @@ public class CommitMetaFilter extends AbstractFilter<RevCommit> {
         }
     }
 
+    /**
+     * Checks if the commit matches the global filtering options.
+     *
+     * @param commit the commit to check
+     *
+     * @return {@code true} if the commit matches and {@code false} otherwise
+     */
     private boolean checkFilter(final RevCommit commit) {
         if (!Config.includeMergeCommits && commit.getParentCount() > 1) {
             return false;

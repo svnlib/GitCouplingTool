@@ -13,7 +13,7 @@ public class ArtifactStoreStage extends AbstractTransformation<List<DiffEntry>, 
 
     @Override
     protected void execute(final List<DiffEntry> commit) {
-        final Set<Artifact> artifacts = ArtifactStore.INSTANCE.parseDiffs(commit);
+        final Set<Artifact> artifacts = ArtifactStore.INSTANCE.applyDiffsOnArtifacts(commit);
         this.outputPort.send(artifacts);
     }
 
