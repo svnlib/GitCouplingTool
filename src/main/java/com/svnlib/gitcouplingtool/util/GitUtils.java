@@ -9,17 +9,17 @@ import org.eclipse.jgit.revwalk.RevWalk;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class GitUtils {
 
     public static Collection<String> getFilesAtCommit(final RevCommit commit) throws IOException {
-        final DiffTool diffTool = new DiffTool();
-        final List<String> paths =
-                diffTool.diffWithEmpty(commit).stream().map(DiffEntry::getNewPath).collect(Collectors.toList());
-        diffTool.close();
-        return paths;
+        try (final DiffTool diffTool = new DiffTool()) {
+            return diffTool.diffWithEmpty(commit)
+                           .stream()
+                           .map(DiffEntry::getNewPath)
+                           .collect(Collectors.toList());
+        }
     }
 
     /**
@@ -28,8 +28,6 @@ public class GitUtils {
      * @return the best matching commit
      */
     public static RevCommit getFirstCommitFromConfig() throws IOException {
-        final Repository repository = Config.git.getRepository();
-
         String ref = null;
         if (Config.fromCommit != null) {
             ref = Config.fromCommit;
@@ -43,12 +41,7 @@ public class GitUtils {
             ref = "HEAD";
         }
 
-        final ObjectId objectId = repository.resolve(ref + "^{commit}");
-        final RevWalk  walk     = new RevWalk(repository);
-
-        final RevCommit commit = walk.parseCommit(objectId);
-        walk.close();
-        return commit;
+        return getRevCommitFromRef(ref);
     }
 
     /**
@@ -57,8 +50,6 @@ public class GitUtils {
      * @return {@code null} if nothing is configured and a specific {@link RevCommit} otherwise.
      */
     public static RevCommit getLastCommitFromConfig() throws IOException {
-        final Repository repository = Config.git.getRepository();
-
         String ref = null;
         if (Config.toCommit != null) {
             ref = Config.toCommit;
@@ -70,12 +61,23 @@ public class GitUtils {
             return null;
         }
 
-        final ObjectId objectId = repository.resolve(ref + "^{commit}");
-        final RevWalk  walk     = new RevWalk(repository);
+        return getRevCommitFromRef(ref);
+    }
 
-        final RevCommit commit = walk.parseCommit(objectId);
-        walk.close();
-        return commit;
+    /**
+     * Returns a {@link RevCommit} to a given reference like HEAD, master or 87f12dee.
+     *
+     * @param ref the reference
+     *
+     * @return the corresponding {@link RevCommit}
+     */
+    private static RevCommit getRevCommitFromRef(final String ref) throws IOException {
+        final Repository repository = Config.git.getRepository();
+        final ObjectId   objectId   = repository.resolve(ref + "^{commit}");
+
+        try (final RevWalk walk = new RevWalk(repository)) {
+            return walk.parseCommit(objectId);
+        }
     }
 
 }

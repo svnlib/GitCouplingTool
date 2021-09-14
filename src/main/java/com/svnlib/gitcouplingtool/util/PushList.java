@@ -16,7 +16,13 @@ public class PushList<T extends Comparable<T>> {
     private       Node first;
     private       Node last;
 
-    public PushList(final long maxSize) {this.maxSize = maxSize;}
+    public PushList(final long maxSize) {
+        if (maxSize <= 0) {
+            throw new IllegalArgumentException(
+                    "A PushList hast to have at least a size of 1 but provide was: " + maxSize);
+        }
+        this.maxSize = maxSize;
+    }
 
     /**
      * Adds an element to the list and sorts it in.
@@ -24,6 +30,9 @@ public class PushList<T extends Comparable<T>> {
      * @param elem the element to add.
      */
     public void add(final T elem) {
+        if (this.size == this.maxSize && this.last.value.compareTo(elem) >= 0) {
+            return;
+        }
         this.size++;
 
         final Node newNode = new Node(elem);

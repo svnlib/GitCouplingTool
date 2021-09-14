@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Tool for calculating diffs between commits.
  */
-public class DiffTool {
+public class DiffTool implements AutoCloseable {
 
     private final RevWalk       walk;
     private final ObjectReader  objectReader;
@@ -36,6 +36,7 @@ public class DiffTool {
     }
 
     /** Closes all internal components. */
+    @Override
     public void close() {
         this.walk.close();
         this.objectReader.close();

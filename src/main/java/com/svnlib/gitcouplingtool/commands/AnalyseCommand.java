@@ -121,11 +121,10 @@ public class AnalyseCommand implements Callable<Integer> {
 
         performAlgorithm(commits, algorithm);
 
-        final BufferedWriter writer =
-                new BufferedWriter(new FileWriter(Config.output, StandardCharsets.UTF_8, false));
-        algorithm.execute();
-        algorithm.export(writer);
-        writer.close();
+        try (final BufferedWriter writer = new BufferedWriter(new FileWriter(Config.output, StandardCharsets.UTF_8, false))) {
+            algorithm.execute();
+            algorithm.export(writer);
+        }
 
         return 0;
     }
