@@ -36,7 +36,7 @@ public class AnalyseCommand implements Callable<Integer> {
             "-e",
             "--edges"
     }, description = "The number of edges with the highest coupling between files to export")
-    public int edgeCount = 100;
+    public int edgeCount = 1000;
 
     @Option(names = { "-a", "--algorithm" }, description = "URC or DRC")
     public Algorithm algorithm = Algorithm.URC;
@@ -121,7 +121,9 @@ public class AnalyseCommand implements Callable<Integer> {
 
         performAlgorithm(commits, algorithm);
 
-        try (final BufferedWriter writer = new BufferedWriter(new FileWriter(Config.output, StandardCharsets.UTF_8, false))) {
+        try (final BufferedWriter writer = new BufferedWriter(new FileWriter(Config.output,
+                                                                             StandardCharsets.UTF_8,
+                                                                             false))) {
             algorithm.execute();
             algorithm.export(writer);
         }
