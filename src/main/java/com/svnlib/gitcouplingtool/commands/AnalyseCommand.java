@@ -1,12 +1,14 @@
 package com.svnlib.gitcouplingtool.commands;
 
 import com.svnlib.gitcouplingtool.Config;
-import com.svnlib.gitcouplingtool.algorithm.AbstractAlgorithm;
+import com.svnlib.gitcouplingtool.algorithm.*;
 import com.svnlib.gitcouplingtool.model.Algorithm;
-import com.svnlib.gitcouplingtool.model.Commit;
+import com.svnlib.gitcouplingtool.model.ExportFormat;
 import com.svnlib.gitcouplingtool.pipeline.AnalysePipeline;
 import com.svnlib.gitcouplingtool.pipeline.CommitCollectionPipeline;
+import com.svnlib.gitcouplingtool.util.GitUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.diff.DiffEntry;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -17,30 +19,40 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
+/** The main command collecting all options and performing the operations. */
 @Command(name = "analyse", description = "Performing the coupling algorithm on a given git repository.")
 public class AnalyseCommand implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The path to the git repository")
-    private File path;
+    public File path;
+
+    @Option(names = {
+            "-e",
+            "--edges"
+    }, description = "The number of edges with the highest coupling between files to export")
+    public int edgeCount = 1000;
 
     @Option(names = { "-a", "--algorithm" }, description = "URC or DRC")
-    private Algorithm algorithm = Algorithm.URC;
+    public Algorithm algorithm = Algorithm.URC;
 
-    @Option(names = { "-t", "--threads" }, description = "The number of threads to use")
-    private int threads = Runtime.getRuntime().availableProcessors();
+    @Option(names = { "-f", "--format" }, description = "The the file format of the exported file")
+    public ExportFormat format = ExportFormat.GML;
 
     @Option(names = { "-o", "--output" }, description = "The path to a file where to save the results")
-    public File output = new File(System.getProperty("user.dir") + "/result.json");
+    public File output = new File(System.getProperty("user.dir") + "/result." + this.format.getFileExtension());
 
     @Option(names = { "-b", "--branch" }, description = "Begin traversal at a specific branch instead of HEAD")
     public String branch = "HEAD";
 
     @Option(names = {
             "--file-type"
-    }, description = "Filter files for a given file extension e.g. \".cpp\" or \".java\"")
+    }, description = "Filter files for a given file suffix e.g. \".cpp\" or \".java\"")
     public List<String> fileTypes;
 
     @Option(names = { "--author" }, description = "Filter commits for a given author name or email")
@@ -76,7 +88,7 @@ public class AnalyseCommand implements Callable<Integer> {
     @Option(names = {
             "-cc",
             "--combine-consecutive"
-    }, description = "Combine consecutive commits in a given interval e.g. \"1d\" or \"5m\"")
+    }, description = "Combine consecutive commits in a given interval in seconds")
     public int combineConsecutive;
 
     @Option(names = {
@@ -90,30 +102,84 @@ public class AnalyseCommand implements Callable<Integer> {
         buildConfig();
         Config.print();
 
-        final AbstractAlgorithm algorithm = Config.algorithm.getAlgorithm();
+        final List<List<DiffEntry>> commits = collectCommits();
+        System.gc();
+        final Set<Artifact> artifacts = initializeStoreAndGetArtifacts();
+        System.gc();
 
-        final List<Commit> commits = collectCommits();
+        final CouplingAlgorithm algorithm;
+        switch (Config.algorithm) {
+            case URC:
+                algorithm = new UndirectedRawCounting(artifacts);
+                break;
+            case DRC:
+                algorithm = new DirectedRawCounting(artifacts);
+                break;
+            default:
+                return -1;
+        }
 
-        final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
-        analysePipeline.execute();
+        performAlgorithm(commits, algorithm);
 
-        final BufferedWriter writer =
-                new BufferedWriter(new FileWriter(Config.output, StandardCharsets.UTF_8, false));
-        algorithm.exportGraph(writer);
-        writer.close();
+        try (final BufferedWriter writer = new BufferedWriter(new FileWriter(Config.output,
+                                                                             StandardCharsets.UTF_8,
+                                                                             false))) {
+            algorithm.execute();
+            algorithm.export(writer);
+        }
 
         return 0;
     }
 
-    private List<Commit> collectCommits() throws IOException {
+    /**
+     * Creates a {@link CommitCollectionPipeline} and executes it.
+     *
+     * @return a list of lists of {@link DiffEntry} for each commit
+     */
+    private List<List<DiffEntry>> collectCommits() throws IOException {
         final CommitCollectionPipeline commitCollectionPipeline = new CommitCollectionPipeline();
         commitCollectionPipeline.execute();
         return commitCollectionPipeline.getCommits();
     }
 
+    /**
+     * Uses the configured first commit to get all files at this commit, initializes the {@link ArtifactStore} with them
+     * and returns the created {@link Artifact}s.
+     *
+     * @return the created {@link Artifact}s
+     */
+    private Set<Artifact> initializeStoreAndGetArtifacts() throws IOException {
+        Collection<String> paths = GitUtils.getFilesAtCommit(GitUtils.getFirstCommitFromConfig());
+        if (Config.fileTypes != null && Config.fileTypes.size() > 0) {
+            paths = paths.stream().filter(path -> {
+                for (final String fileType : Config.fileTypes) {
+                    if (path.endsWith(fileType)) {
+                        return true;
+                    }
+                }
+                return false;
+            }).collect(Collectors.toList());
+        }
+        ArtifactStore.INSTANCE.initialize(paths);
+        return ArtifactStore.INSTANCE.getArtifacts();
+    }
+
+    /**
+     * Performs the given {@link CouplingAlgorithm} on the given commits by using a {@link AnalysePipeline}.
+     *
+     * @param commits   the collected commits
+     * @param algorithm the algorithm to perform on the commits
+     */
+    private void performAlgorithm(final List<List<DiffEntry>> commits, final CouplingAlgorithm algorithm) {
+        final AnalysePipeline analysePipeline = new AnalysePipeline(commits, algorithm);
+        analysePipeline.execute();
+    }
+
+    /** Transfer the options to the global config. */
     private void buildConfig() throws IOException {
-        Config.threads = this.threads;
+        Config.edgeCount = this.edgeCount;
         Config.algorithm = this.algorithm;
+        Config.format = this.format;
         Config.output = this.output;
         Config.branch = this.branch;
         Config.fileTypes = this.fileTypes;

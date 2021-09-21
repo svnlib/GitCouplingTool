@@ -2,6 +2,7 @@ package com.svnlib.gitcouplingtool;
 
 import com.diogonunes.jcolor.Attribute;
 import com.svnlib.gitcouplingtool.model.Algorithm;
+import com.svnlib.gitcouplingtool.model.ExportFormat;
 import org.eclipse.jgit.api.Git;
 
 import java.io.File;
@@ -10,13 +11,16 @@ import java.util.List;
 
 import static com.diogonunes.jcolor.Ansi.colorize;
 
+/** A static class containing the global config. */
 public class Config {
 
     public static Git git;
 
-    public static int          threads;
+    public static int          threads = Runtime.getRuntime().availableProcessors();
+    public static int          edgeCount;
     public static Algorithm    algorithm;
     public static File         output;
+    public static ExportFormat format;
     public static String       branch;
     public static List<String> fileTypes;
     public static String       author;
@@ -36,10 +40,9 @@ public class Config {
         final String s = colorize("================================================\n", Attribute.BOLD()) +
                          colorize("Running with config:\n", Attribute.BOLD()) +
                          colorize("------------------------------------------------\n", Attribute.BOLD()) +
-                         colorize("Performance\n", Attribute.UNDERLINE()) +
-                         "Threads:                " + threads + "\n" +
-                         colorize("\nGeneral\n", Attribute.UNDERLINE()) +
+                         colorize("General\n", Attribute.UNDERLINE()) +
                          "Repository:             " + git.getRepository().getDirectory() + "\n" +
+                         "Format:                 " + format + "\n" +
                          "Output:                 " + output + "\n" +
                          "Algorithm:              " + algorithm + "\n" +
                          "Combine consecutive:    " + combineConsecutive + "\n" +
@@ -57,7 +60,10 @@ public class Config {
                          "Exclude large commits:  " + excludeLargeCommits + "\n" +
                          "Include merge commits:  " + includeMergeCommits + "\n" +
                          colorize("\nValues\n", Attribute.UNDERLINE()) +
+                         "Edge count:             " + edgeCount + "\n" +
                          "Large commit threshold: " + largeThreshold + "\n" +
+                         colorize("\nPerformance\n", Attribute.UNDERLINE()) +
+                         "Threads:                " + threads + "\n" +
                          colorize("================================================\n\n", Attribute.BOLD());
         System.out.print(s);
     }

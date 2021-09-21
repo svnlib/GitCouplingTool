@@ -1,12 +1,12 @@
 package com.svnlib.gitcouplingtool.pipeline.stages;
 
 import com.svnlib.gitcouplingtool.Config;
-import com.svnlib.gitcouplingtool.model.Commit;
 import com.svnlib.gitcouplingtool.util.DiffTool;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import teetime.stage.basic.AbstractTransformation;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * A TeeTime stage that is responsible for parsing the {@link DiffEntry}s of a commit and filtering them by the
  * configured file extensions.
  */
-public class CommitParserStage extends AbstractTransformation<RevCommit, Commit> {
+public class CommitParserStage extends AbstractTransformation<List<RevCommit>, List<DiffEntry>> {
 
     private final DiffTool diff;
 
@@ -23,9 +23,26 @@ public class CommitParserStage extends AbstractTransformation<RevCommit, Commit>
     }
 
     @Override
-    protected void execute(final RevCommit revCommit) throws Exception {
-        final List<DiffEntry> diffs = this.diff.diff(revCommit);
-        this.outputPort.send(new Commit(revCommit.getId().name(), filterDiffs(diffs)));
+    protected void execute(final List<RevCommit> consecutiveCommits) throws Exception {
+        final LinkedList<RevCommit> commits = new LinkedList<>(consecutiveCommits);
+        if (commits.size() == 1) {
+            this.outputPort.send(filterDiffs(this.diff.diff(commits.get(0))));
+        } else {
+            final RevCommit firstCommit = commits.get(0);
+
+            RevCommit lastCommit = commits.get(commits.size() - 1);
+            if (lastCommit.getParentCount() > 0) {
+                lastCommit = lastCommit.getParent(0);
+            }
+
+            this.outputPort.send(filterDiffs(this.diff.diff(firstCommit, lastCommit)));
+        }
+    }
+
+    @Override
+    protected void onTerminating() {
+        this.diff.close();
+        super.onTerminating();
     }
 
     /**

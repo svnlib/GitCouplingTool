@@ -1,7 +1,7 @@
 package com.svnlib.gitcouplingtool.graph.io;
 
-import com.svnlib.gitcouplingtool.graph.AbstractEdge;
-import com.svnlib.gitcouplingtool.graph.AbstractGraph;
+import com.svnlib.gitcouplingtool.graph.Edge;
+import com.svnlib.gitcouplingtool.graph.Graph;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -10,59 +10,71 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public abstract class JSONExporter<V, E extends AbstractEdge<V>> {
-
-    private final Writer writer;
+/**
+ * A graph exporter to generate the JSON file format.
+ */
+public class JSONExporter extends AbstractExporter {
 
     public JSONExporter(final Writer writer) {
-        this.writer = writer;
+        super(writer);
     }
 
-    public void export(final AbstractGraph<V, E> graph) throws IOException {
-        this.writer.write("{\"nodes\":[");
-        this.writer.write(exportNodes(filterNodes(graph.getNodes())));
-        this.writer.write("],\"edges\":[");
-        this.writer.write(exportEdges(filterEdges(graph.getEdges())));
-        this.writer.write("]}");
+    @Override
+    public void export(final Graph graph) throws IOException {
+        write("{\"nodes\":[");
+        write(exportNodes(graph.getNodes()));
+        write("],\"edges\":[");
+        write(exportEdges(graph.getEdges()));
+        write("]}");
     }
 
-    private String exportNodes(final Collection<V> nodes) {
+    @Override
+    protected String exportNodes(final Collection<String> nodes) {
         final List<String> formattedNodes = nodes.stream()
-                                                 .map(node -> mapToJsonObject(nodeAttributes(node)))
+                                                 .map(node -> attributesToString(nodeAttributes(node)))
                                                  .collect(Collectors.toList());
 
         return String.join(",", formattedNodes);
     }
 
-    private String exportEdges(final Collection<E> edges) {
+    @Override
+    protected String exportEdges(final Collection<Edge> edges) {
         final List<String> formattedEdges = edges.stream()
-                                                 .map(edge -> mapToJsonObject(edgeAttributes(edge)))
+                                                 .map(edge -> attributesToString(edgeAttributes(edge)))
                                                  .collect(Collectors.toList());
 
         return String.join(",", formattedEdges);
     }
 
-    private String mapToJsonObject(final Map<String, Object> attributes) {
+    @Override
+    protected String attributesToString(final Map<String, Object> attributes) {
         final StringBuilder sb = new StringBuilder();
         sb.append("{");
         for (final String key : attributes.keySet()) {
-            sb.append('"').append(key).append("\":").append(objectToString(attributes.get(key))).append(',');
+            sb.append('"').append(key).append("\":").append(enquoteString(attributes.get(key))).append(',');
         }
         sb.deleteCharAt(sb.lastIndexOf(","));
         sb.append("}");
         return sb.toString();
     }
 
-    private String objectToString(final Object o) {
-        if (o instanceof Number || o instanceof Boolean) {
-            return o.toString();
-        }
-        return '"' + o.toString() + '"';
+    @Override
+    protected Map<String, Object> nodeAttributes(final String node) {
+        return Map.of("id", node);
     }
 
-    protected abstract Collection<V> filterNodes(Collection<V> nodes);
-    protected abstract Collection<E> filterEdges(Collection<E> edges);
-    protected abstract Map<String, Object> nodeAttributes(V node);
-    protected abstract Map<String, Object> edgeAttributes(AbstractEdge<V> edge);
+    @Override
+    protected Map<String, Object> edgeAttributes(final Edge edge) {
+        return Map.of("id",
+                      edge.getSrc() + "::" + edge.getDest(),
+                      "start",
+                      edge.getSrc(),
+                      "end",
+                      edge.getDest(),
+                      "weight",
+                      edge.getWeight(),
+                      "directed",
+                      edge.isDirected());
+    }
 
 }

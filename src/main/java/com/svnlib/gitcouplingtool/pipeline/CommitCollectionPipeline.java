@@ -1,9 +1,9 @@
 package com.svnlib.gitcouplingtool.pipeline;
 
 import com.svnlib.gitcouplingtool.Config;
-import com.svnlib.gitcouplingtool.model.Commit;
 import com.svnlib.gitcouplingtool.pipeline.stages.*;
-import me.tongfei.progressbar.ProgressBarStyle;
+import com.svnlib.gitcouplingtool.util.ProgressBarUtils;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import teetime.stage.CollectorSink;
 import teetime.stage.basic.distributor.Distributor;
@@ -13,26 +13,23 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+/** Pipeline for collecting commits, filtering and retrieving diffs. */
 public class CommitCollectionPipeline extends AbstractPipeline {
 
-    private final CollectorSink<Commit> collectorStage;
+    private final CollectorSink<List<DiffEntry>> collectorStage;
 
     public CommitCollectionPipeline() throws IOException {
-        final CommitProducerStage commitProducerStage = new CommitProducerStage();
-        final CommitMetaFilter    commitMetaFilter    = new CommitMetaFilter();
+        final CommitProducerStage     commitProducerStage     = new CommitProducerStage();
+        final CommitMetaFilter        commitMetaFilter        = new CommitMetaFilter();
+        final CombineConsecutiveStage combineConsecutiveStage = new CombineConsecutiveStage();
 
-        final Distributor<RevCommit> revCommitDistributor = new Distributor<>();
-        final Merger<Commit>         revCommitMerger      = new Merger<>();
+        final Distributor<List<RevCommit>> revCommitDistributor = new Distributor<>();
+        final Merger<List<DiffEntry>>      revCommitMerger      = new Merger<>();
 
         final CommitDiffCountFilter commitDiffCountFilter = new CommitDiffCountFilter();
 
-        final ProgressBarStage<Commit> progressBarStage = new ProgressBarStage<>();
-        progressBarStage.builder()
-                        .setUnit(" Commits", 1)
-                        .showSpeed()
-                        .setUpdateIntervalMillis(100)
-                        .setStyle(ProgressBarStyle.ASCII)
-                        .setTaskName("Collecting Commits");
+        final ProgressBarStage<List<DiffEntry>> progressBarStage = new ProgressBarStage<>();
+        ProgressBarUtils.addToBuilder(progressBarStage.builder(), "Collecting", "Commits");
 
         this.collectorStage = new CollectorSink<>(new LinkedList<>());
 
@@ -40,7 +37,7 @@ public class CommitCollectionPipeline extends AbstractPipeline {
         revCommitMerger.declareActive();
         commitDiffCountFilter.declareActive();
 
-        final int numDiffThreads = Math.max(Config.threads - 4, 2);
+        final int numDiffThreads = Math.min(Math.max(Config.threads - 4, 2), 6);
         for (int i = 0; i < numDiffThreads; i++) {
             final CommitParserStage commitParserStage = new CommitParserStage();
             commitParserStage.declareActive();
@@ -49,13 +46,14 @@ public class CommitCollectionPipeline extends AbstractPipeline {
         }
 
         connectPorts(commitProducerStage.getOutputPort(), commitMetaFilter.getInputPort());
-        connectPorts(commitMetaFilter.getOutputPort(), revCommitDistributor.getInputPort());
+        connectPorts(commitMetaFilter.getOutputPort(), combineConsecutiveStage.getInputPort());
+        connectPorts(combineConsecutiveStage.getOutputPort(), revCommitDistributor.getInputPort());
         connectPorts(revCommitMerger.getOutputPort(), commitDiffCountFilter.getInputPort());
         connectPorts(commitDiffCountFilter.getOutputPort(), progressBarStage.getInputPort());
         connectPorts(progressBarStage.getOutputPort(), this.collectorStage.getInputPort());
     }
 
-    public List<Commit> getCommits() {
+    public List<List<DiffEntry>> getCommits() {
         return this.collectorStage.getElements();
     }
 
