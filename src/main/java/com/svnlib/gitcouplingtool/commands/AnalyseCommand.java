@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 /** The main command collecting all options and performing the operations. */
-@Command(name = "analyse", description = "Performing the coupling algorithm on a given git repository.")
+@Command(name = "analyse", description = "Performing the coupling algorithm on a given git repository.", showDefaultValues = true)
 public class AnalyseCommand implements Callable<Integer> {
 
     @Parameters(index = "0", description = "The path to the git repository")
@@ -35,8 +35,14 @@ public class AnalyseCommand implements Callable<Integer> {
     @Option(names = {
             "-e",
             "--edges"
-    }, description = "The number of edges with the highest coupling between files to export")
-    public int edgeCount = 1000;
+    }, description = "Export only the n edges with the highest value or all if set to 0")
+    public int edgeCount = 0;
+
+    @Option(names = {
+            "-c",
+            "--min-couplings"
+    }, description = "The minimum number of common commits to be exported in the final graph")
+    public int minCouplings = 2;
 
     @Option(names = { "-a", "--algorithm" }, description = "URC or DRC")
     public Algorithm algorithm = Algorithm.URC;
@@ -177,6 +183,7 @@ public class AnalyseCommand implements Callable<Integer> {
 
     /** Transfer the options to the global config. */
     private void buildConfig() throws IOException {
+        Config.minCouplings = this.minCouplings;
         Config.edgeCount = this.edgeCount;
         Config.algorithm = this.algorithm;
         Config.format = this.format;

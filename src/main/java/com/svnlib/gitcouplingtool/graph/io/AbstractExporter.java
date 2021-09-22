@@ -5,13 +5,11 @@ import com.svnlib.gitcouplingtool.graph.Graph;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Superclass for an exporter exporting graphs with a given type of edge.
- *
- * @param <E> the type of the edge
  */
 public abstract class AbstractExporter {
 
@@ -31,8 +29,11 @@ public abstract class AbstractExporter {
      */
     public abstract void export(final Graph graph) throws IOException;
 
-    protected abstract String exportNodes(final Collection<String> nodes);
-    protected abstract String exportEdges(final Collection<Edge> edges);
+    public abstract void export(final Iterator<String> nodeIterator, final Iterator<Edge> edgeIterator) throws
+                                                                                                        IOException;
+
+    protected abstract void exportNodes(final Iterator<String> nodes) throws IOException;
+    protected abstract void exportEdges(final Iterator<Edge> edges) throws IOException;
     protected abstract String attributesToString(final Map<String, Object> attributes);
     protected abstract Map<String, Object> nodeAttributes(String node);
     protected abstract Map<String, Object> edgeAttributes(Edge edge);

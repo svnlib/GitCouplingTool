@@ -25,8 +25,7 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
     /** A triangular matrix with the size of given artifact count. */
     private final int[][]                countingMatrix;
 
-    private final Graph          graph;
-    final         PushList<Edge> edges;
+    private final Graph graph;
 
     /**
      * Initializes the algorithm by creating the counting matrix and the indices.
@@ -34,8 +33,8 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
      * @param artifacts the artifacts to be indexed
      */
     protected CountingAlgorithm(final Collection<Artifact> artifacts) {
+
         this.graph = new Graph();
-        this.edges = new PushList<>(Config.edgeCount);
 
         final int artifactCount = artifacts.size();
         final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Building Counting Matrix", "Rows")
@@ -91,6 +90,10 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
 
     @Override
     public void execute() {
+        if (Config.edgeCount < 1) {
+            return;
+        }
+        final PushList<Edge> edges = new PushList<>(Config.edgeCount);
         final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Building Graph", "Steps")
                                                .setInitialMax((((long) this.countingMatrix.length - 1) *
                                                                (this.countingMatrix.length - 1)) / 2 + Config.edgeCount)
@@ -100,7 +103,7 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
             for (int j = 0; j < i; j++) {
                 pb.step();
                 final int commonCount = this.countingMatrix[i][j];
-                if (commonCount <= 1) {
+                if (commonCount < Config.minCouplings) {
                     continue;
                 }
                 createEdges(this.idxToArtifactIndex.get(i),
@@ -108,11 +111,11 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
                             this.countingMatrix[i][i],
                             this.countingMatrix[j][j],
                             commonCount)
-                        .forEach(this.edges::add);
+                        .forEach(edges::add);
             }
         }
 
-        this.edges.toList().forEach(e -> {
+        edges.toList().forEach(e -> {
             this.graph.addEdge(e);
             this.graph.addNode(e.getSrc());
             this.graph.addNode(e.getDest());
@@ -135,7 +138,109 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
             default:
                 return;
         }
-        exporter.export(this.graph);
+        if (Config.edgeCount > 0) {
+            exporter.export(this.graph);
+        } else {
+            exporter.export(new NodeIterator(), new EdgeIterator());
+        }
+    }
+
+    private class EdgeIterator implements Iterator<Edge> {
+
+        final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Export Edges", "Edges")
+                                               .setInitialMax(
+                                                       (((long) CountingAlgorithm.this.countingMatrix.length - 1) *
+                                                        (CountingAlgorithm.this.countingMatrix.length - 1)) / 2)
+                                               .build();
+
+        private int row = 1;
+        private int col = 0;
+
+        Deque<Edge> previousEdges = new LinkedList<>();
+
+        @Override
+        public boolean hasNext() {
+            if (!this.previousEdges.isEmpty()) {
+                return true;
+            } else {
+                skip();
+                return this.row < CountingAlgorithm.this.countingMatrix.length;
+            }
+        }
+
+        @Override
+        public Edge next() {
+            if (!this.previousEdges.isEmpty()) {
+                return this.previousEdges.poll();
+            }
+            skip();
+            final int commonCount = CountingAlgorithm.this.countingMatrix[this.row][this.col];
+            this.previousEdges.addAll(createEdges(CountingAlgorithm.this.idxToArtifactIndex.get(this.row),
+                                                  CountingAlgorithm.this.idxToArtifactIndex.get(this.col),
+                                                  CountingAlgorithm.this.countingMatrix[this.row][this.row],
+                                                  CountingAlgorithm.this.countingMatrix[this.col][this.col],
+                                                  commonCount));
+
+            movePointer();
+            return this.previousEdges.poll();
+        }
+
+        private void skip() {
+            while (this.row < CountingAlgorithm.this.countingMatrix.length &&
+                   CountingAlgorithm.this.countingMatrix[this.row][this.col] < Config.minCouplings) {
+                movePointer();
+            }
+        }
+
+        private void movePointer() {
+            this.pb.step();
+            this.col = (this.col + 1) % this.row;
+            if (this.col == 0) {
+                this.row++;
+            }
+        }
+
+    }
+
+    private class NodeIterator implements Iterator<String> {
+
+        final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Exporting Nodes", "Nodes")
+                                               .setInitialMax(CountingAlgorithm.this.countingMatrix.length)
+                                               .build();
+
+        private int idx = 0;
+
+        @Override
+        public boolean hasNext() {
+            skip();
+            return this.idx < CountingAlgorithm.this.countingMatrix.length;
+        }
+
+        @Override
+        public String next() {
+            this.pb.step();
+            return CountingAlgorithm.this.idxToArtifactIndex.get(this.idx++).getOriginalPath();
+        }
+
+        private void skip() {
+            while (this.idx < CountingAlgorithm.this.countingMatrix.length) {
+                for (int i = 0; i < CountingAlgorithm.this.countingMatrix.length; i++) {
+                    if (i == this.idx) {
+                        continue;
+                    }
+
+                    if (i < this.idx && CountingAlgorithm.this.countingMatrix[this.idx][i] >= Config.minCouplings) {
+                        return;
+                    }
+                    if (i > this.idx && CountingAlgorithm.this.countingMatrix[i][this.idx] >= Config.minCouplings) {
+                        return;
+                    }
+                }
+                this.pb.step();
+                this.idx++;
+            }
+        }
+
     }
 
 }

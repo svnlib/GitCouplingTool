@@ -5,10 +5,8 @@ import com.svnlib.gitcouplingtool.graph.Graph;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * A graph exporter to generate the JSON file format.
@@ -21,29 +19,39 @@ public class JSONExporter extends AbstractExporter {
 
     @Override
     public void export(final Graph graph) throws IOException {
+        export(graph.getNodes().iterator(), graph.getEdges().iterator());
+    }
+
+    @Override
+    public void export(final Iterator<String> nodeIterator, final Iterator<Edge> edgeIterator) throws IOException {
+
         write("{\"nodes\":[");
-        write(exportNodes(graph.getNodes()));
+        exportNodes(nodeIterator);
         write("],\"edges\":[");
-        write(exportEdges(graph.getEdges()));
+        exportEdges(edgeIterator);
         write("]}");
     }
 
     @Override
-    protected String exportNodes(final Collection<String> nodes) {
-        final List<String> formattedNodes = nodes.stream()
-                                                 .map(node -> attributesToString(nodeAttributes(node)))
-                                                 .collect(Collectors.toList());
-
-        return String.join(",", formattedNodes);
+    protected void exportNodes(final Iterator<String> nodes) throws IOException {
+        while (nodes.hasNext()) {
+            final String node = nodes.next();
+            write(attributesToString(nodeAttributes(node)));
+            if (nodes.hasNext()) {
+                write(",");
+            }
+        }
     }
 
     @Override
-    protected String exportEdges(final Collection<Edge> edges) {
-        final List<String> formattedEdges = edges.stream()
-                                                 .map(edge -> attributesToString(edgeAttributes(edge)))
-                                                 .collect(Collectors.toList());
-
-        return String.join(",", formattedEdges);
+    protected void exportEdges(final Iterator<Edge> edges) throws IOException {
+        while (edges.hasNext()) {
+            final Edge edge = edges.next();
+            write(attributesToString(edgeAttributes(edge)));
+            if (edges.hasNext()) {
+                write(",");
+            }
+        }
     }
 
     @Override

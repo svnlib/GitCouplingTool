@@ -5,7 +5,7 @@ import com.svnlib.gitcouplingtool.graph.Graph;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,24 +20,32 @@ public class GMLExporter extends AbstractExporter {
 
     @Override
     public void export(final Graph graph) throws IOException {
+        this.export(graph.getNodes().iterator(), graph.getEdges().iterator());
+    }
+
+    @Override
+    public void export(final Iterator<String> nodeIterator, final Iterator<Edge> edgeIterator) throws IOException {
+
         write("graph [\n");
-        write(exportNodes(graph.getNodes()));
-        write(exportEdges(graph.getEdges()));
+        exportNodes(nodeIterator);
+        exportEdges(edgeIterator);
         write("\n]");
     }
 
     @Override
-    protected String exportNodes(final Collection<String> nodes) {
-        return nodes.stream()
-                    .map(node -> "node\n[\n" + attributesToString(nodeAttributes(node)) + "\n]")
-                    .collect(Collectors.joining("\n"));
+    protected void exportNodes(final Iterator<String> nodes) throws IOException {
+        while (nodes.hasNext()) {
+            final String node = nodes.next();
+            write("node [\n" + attributesToString(nodeAttributes(node)) + "\n]\n");
+        }
     }
 
     @Override
-    protected String exportEdges(final Collection<Edge> edges) {
-        return edges.stream()
-                    .map(edge -> "edge\n[\n" + attributesToString(edgeAttributes(edge)) + "\n]")
-                    .collect(Collectors.joining("\n"));
+    protected void exportEdges(final Iterator<Edge> edges) throws IOException {
+        while (edges.hasNext()) {
+            final Edge edge = edges.next();
+            write("edge [\n" + attributesToString(edgeAttributes(edge)) + "\n]\n");
+        }
     }
 
     @Override

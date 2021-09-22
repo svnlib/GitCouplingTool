@@ -17,6 +17,7 @@ public class Config {
     public static Git git;
 
     public static int          threads = Runtime.getRuntime().availableProcessors();
+    public static int          minCouplings;
     public static int          edgeCount;
     public static Algorithm    algorithm;
     public static File         output;
@@ -60,7 +61,8 @@ public class Config {
                          "Exclude large commits:  " + excludeLargeCommits + "\n" +
                          "Include merge commits:  " + includeMergeCommits + "\n" +
                          colorize("\nValues\n", Attribute.UNDERLINE()) +
-                         "Edge count:             " + edgeCount + "\n" +
+                         "Min. couplings:         " + minCouplings + "\n" +
+                         "Edge count:             " + (edgeCount < 1 ? "all" : edgeCount) + "\n" +
                          "Large commit threshold: " + largeThreshold + "\n" +
                          colorize("\nPerformance\n", Attribute.UNDERLINE()) +
                          "Threads:                " + threads + "\n" +
