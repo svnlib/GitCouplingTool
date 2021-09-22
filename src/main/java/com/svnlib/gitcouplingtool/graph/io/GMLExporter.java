@@ -25,7 +25,6 @@ public class GMLExporter extends AbstractExporter {
 
     @Override
     public void export(final Iterator<String> nodeIterator, final Iterator<Edge> edgeIterator) throws IOException {
-
         write("graph [\n");
         exportNodes(nodeIterator);
         exportEdges(edgeIterator);

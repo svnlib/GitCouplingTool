@@ -12,6 +12,7 @@ import me.tongfei.progressbar.ProgressBar;
 
 import java.io.Writer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A super class for all algorithms based on counting file changes.
@@ -74,11 +75,9 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
 
     @Override
     public void changedArtifacts(final Collection<Artifact> artifacts) {
-        for (final Artifact artifact1 : artifacts) {
-            for (final Artifact artifact2 : artifacts) {
-                final int idx1 = this.artifactToIdxIndex.get(artifact1);
-                final int idx2 = this.artifactToIdxIndex.get(artifact2);
-
+        final List<Integer> indexes = artifacts.stream().map(this.artifactToIdxIndex::get).collect(Collectors.toList());
+        for (final int idx1 : indexes) {
+            for (final int idx2 : indexes) {
                 if (idx1 >= idx2) {
                     synchronized (this.countingMatrix[idx1]) {
                         this.countingMatrix[idx1][idx2]++;
@@ -145,6 +144,9 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
         }
     }
 
+    /**
+     * Iterates over the counting matrix and returns the edges.
+     */
     private class EdgeIterator implements Iterator<Edge> {
 
         final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Export Edges", "Edges")
@@ -185,6 +187,9 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
             return this.previousEdges.poll();
         }
 
+        /**
+         * Skip all file combinations that have less than minCouplings common commits.
+         */
         private void skip() {
             while (this.row < CountingAlgorithm.this.countingMatrix.length &&
                    CountingAlgorithm.this.countingMatrix[this.row][this.col] < Config.minCouplings) {
@@ -192,6 +197,9 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
             }
         }
 
+        /**
+         * Move the row and col pointer to the next position.
+         */
         private void movePointer() {
             this.pb.step();
             this.col = (this.col + 1) % this.row;
@@ -202,6 +210,9 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
 
     }
 
+    /**
+     * Iterates over the counting matrix and returns the nodes.
+     */
     private class NodeIterator implements Iterator<String> {
 
         final ProgressBar pb = ProgressBarUtils.getDefaultBuilder("Exporting Nodes", "Nodes")
@@ -222,6 +233,9 @@ public abstract class CountingAlgorithm implements CouplingAlgorithm {
             return CountingAlgorithm.this.idxToArtifactIndex.get(this.idx++).getOriginalPath();
         }
 
+        /**
+         * Skip all files that are not coupled to any other file.
+         */
         private void skip() {
             while (this.idx < CountingAlgorithm.this.countingMatrix.length) {
                 for (int i = 0; i < CountingAlgorithm.this.countingMatrix.length; i++) {
