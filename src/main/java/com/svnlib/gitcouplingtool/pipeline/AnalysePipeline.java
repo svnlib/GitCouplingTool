@@ -28,7 +28,8 @@ public class AnalysePipeline extends AbstractPipeline {
                                 "Commits")
                         .setInitialMax(commits.size());
 
-        for (int i = 0; i < Math.max((Config.threads - 2), 1); i++) {
+        final int numThreads = Config.followRenames ? 1 : Math.max((Config.threads - 2), 1);
+        for (int i = 0; i < numThreads; i++) {
             final AlgorithmStage algorithmStage = new AlgorithmStage(algorithm);
             algorithmStage.declareActive();
             connectPorts(commitDistributor.getNewOutputPort(), algorithmStage.getInputPort());

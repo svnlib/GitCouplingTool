@@ -37,7 +37,7 @@ public class CommitCollectionPipeline extends AbstractPipeline {
         revCommitMerger.declareActive();
         commitDiffCountFilter.declareActive();
 
-        final int numDiffThreads = Math.min(Math.max(Config.threads - 4, 2), 6);
+        final int numDiffThreads = Config.followRenames ? 1 : Math.min(Math.max(Config.threads - 4, 2), 12);
         for (int i = 0; i < numDiffThreads; i++) {
             final CommitParserStage commitParserStage = new CommitParserStage();
             commitParserStage.declareActive();
